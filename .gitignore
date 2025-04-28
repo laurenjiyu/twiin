@@ -1,0 +1,46 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+web-build/
+
+# Expo
+.expo/
+.expo-shared/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+expo-debug.log
+
+# IDE settings
+.vscode/
+.idea/
+
+# Cache
+.cache/
+expo-packager-cache/
+metro-cache/
+
+# Mac system files
+*.swp
+
+# Android / iOS specific (if you eject)
+android/
+ios/
+
+# Misc
+*.log
+*.tmp
