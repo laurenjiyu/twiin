@@ -1,9 +1,22 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // easy way to get icons
-import TabIcon from './TabIcon'; // import the TabIcon component
+import { Ionicons } from '@expo/vector-icons';
+import TabIcon from './TabIcon';
 
 const FloatingNavBar = ({ state, descriptors, navigation }) => {
+  const getIconName = (label) => {
+    switch (label) {
+      case 'Home':
+        return 'home-outline';
+      case 'Rankings':
+        return 'trophy-outline';
+      case 'Profile':
+        return 'person-outline';
+      default:
+        return 'home-outline';
+    }
+  };
+
   return (
     <View style={styles.container}>
       {state.routes.map((route, index) => {
@@ -17,7 +30,6 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
 
         const isFocused = state.index === index;
 
-        // basic press action
         const onPress = () => {
           if (!isFocused) {
             navigation.navigate(route.name);
@@ -30,12 +42,10 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
             onPress={onPress}
             style={styles.tabButton}
           >
-            {/* This will render icons */}
             <TabIcon
-                name={label === 'Home' ? 'home-outline' : 'trophy-outline'}
-                focused={isFocused}
+              name={getIconName(label)}
+              focused={isFocused}
             />
-
           </TouchableOpacity>
         );
       })}
@@ -56,7 +66,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     zIndex: 100,
-    elevation: 10, // android shadow
+    elevation: 10,
   },
   tabButton: {
     flex: 1,
