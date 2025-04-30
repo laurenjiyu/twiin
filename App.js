@@ -6,6 +6,13 @@ import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-g
 import { Text } from 'react-native';
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_700Bold,
+  });
+  if (!fontsLoaded) return null;
   return (
     <NavigationContainer>
       {isLoggedIn ? (

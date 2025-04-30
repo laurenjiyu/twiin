@@ -32,7 +32,7 @@ export default function LoginScreen({ navigation }) {
       if (error) {
         Alert.alert("Login failed", error.message);
       } else {
-        navigation.replace("Main"); // Navigate to TabNavigator
+        navigation.replace("Main"); 
       }
     } catch (err) {
       console.error(err);
