@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Button } from 'react-native';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Button,
+} from "react-native";
 
 // Array of difficulties; you can fetch this and more details from Supabase
-const difficulties = ['Easy', 'Medium', 'Hard'];
+const difficulties = ["Easy", "Medium", "Hard"];
 
 const HomeScreen = () => {
   // Timer state: days, hours, minutes, seconds, or expired flag
@@ -31,7 +38,9 @@ const HomeScreen = () => {
       }
 
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
@@ -45,8 +54,8 @@ const HomeScreen = () => {
 
   // Placeholder match data; fetch real match from Supabase API
   const match = {
-    name: 'John Doe',
-    avatarUrl: 'https://via.placeholder.com/100',
+    name: "John Doe",
+    avatarUrl: "https://via.placeholder.com/100",
   };
 
   // Challenge picker state; start at index 1 (Medium)
@@ -57,12 +66,13 @@ const HomeScreen = () => {
   };
 
   const handleNext = () => {
-    if (currentIndex < difficulties.length - 1) setCurrentIndex(currentIndex + 1);
+    if (currentIndex < difficulties.length - 1)
+      setCurrentIndex(currentIndex + 1);
   };
 
   const handleSelect = () => {
     // TODO: handle selection action, e.g. navigate to challenge screen
-    console.log('Selected difficulty:', difficulties[currentIndex]);
+    console.log("Selected difficulty:", difficulties[currentIndex]);
   };
 
   return (
@@ -73,7 +83,8 @@ const HomeScreen = () => {
           <Text style={styles.timerText}>Challenge period has ended</Text>
         ) : (
           <Text style={styles.timerText}>
-            {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
+            {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m{" "}
+            {timeLeft.seconds}s
           </Text>
         )}
       </View>
@@ -94,17 +105,33 @@ const HomeScreen = () => {
       <Text style={styles.sectionHeader}>PICK A CHALLENGE</Text>
       <View style={styles.pickerContainer}>
         <TouchableOpacity onPress={handlePrev} disabled={currentIndex === 0}>
-          <Text style={[styles.arrow, currentIndex === 0 && styles.disabledArrow]}>‹</Text>
+          <Text
+            style={[styles.arrow, currentIndex === 0 && styles.disabledArrow]}
+          >
+            ‹
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.challengeCard}>
-          <Text style={styles.difficultyText}>{difficulties[currentIndex]}</Text>
+          <Text style={styles.difficultyText}>
+            {difficulties[currentIndex]}
+          </Text>
           <Text style={styles.taskText}>TASK</Text>
           <Button title="Select" onPress={handleSelect} />
         </View>
 
-        <TouchableOpacity onPress={handleNext} disabled={currentIndex === difficulties.length - 1}>
-          <Text style={[styles.arrow, currentIndex === difficulties.length - 1 && styles.disabledArrow]}>›</Text>
+        <TouchableOpacity
+          onPress={handleNext}
+          disabled={currentIndex === difficulties.length - 1}
+        >
+          <Text
+            style={[
+              styles.arrow,
+              currentIndex === difficulties.length - 1 && styles.disabledArrow,
+            ]}
+          >
+            ›
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -127,21 +154,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: "#f2f2f2",
   },
   timerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   timerText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
@@ -149,12 +176,12 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   matchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatar: {
     width: 50,
@@ -170,32 +197,32 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   arrow: {
     fontSize: 30,
     paddingHorizontal: 10,
   },
   disabledArrow: {
-    color: '#ccc',
+    color: "#ccc",
   },
   challengeCard: {
     width: 200,
     height: 200,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginHorizontal: 10,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: "#fff",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -203,12 +230,12 @@ const styles = StyleSheet.create({
   },
   difficultyText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   taskText: {
     marginVertical: 15,
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
 });
 
