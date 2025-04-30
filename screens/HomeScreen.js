@@ -61,7 +61,9 @@ const HomeScreen = () => {
         return;
       }
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
       setTimeLeft({ days, hours, minutes, seconds, expired: false });
@@ -87,7 +89,8 @@ const HomeScreen = () => {
           <Text style={styles.timerText}>Expired</Text>
         ) : (
           <Text style={styles.timerText}>
-            {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
+            {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m{" "}
+            {timeLeft.seconds}s
           </Text>
         )}
       </View>
@@ -182,8 +185,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   matchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatar: {
     width: 50,
@@ -205,7 +208,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
     color: theme.colors.text,
   },
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   disabledArrow: {
-    color: '#ccc',
+    color: "#ccc",
   },
   challengeContent: {
     alignItems: 'center',
