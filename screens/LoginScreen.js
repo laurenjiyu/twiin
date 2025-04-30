@@ -9,10 +9,9 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-//import Theme from "@/assets/theme";
+import Theme from "../assets/theme";
 
 import db from "../database/db";
-
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -49,14 +48,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <View style={styles.splash}>
-        <MaterialCommunityIcons
-          size={64}
-          name="bee-flower"
-          color={Theme.colors.iconHighlighted}
-        />
-        <Text style={styles.splashText}>Buzz</Text>
-      </View>
+      <Text style={styles.splashText}>Twiin</Text>
       <TextInput
         onChangeText={setEmail}
         value={email}
@@ -99,6 +91,7 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: Theme.colors.backgroundPrimary,
     flex: 1,
+    justifyContent: "center",
   },
   splash: {
     alignItems: "center",
@@ -108,6 +101,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: Theme.colors.textPrimary,
     fontSize: 60,
+    textAlign: "center",
   },
   buttonContainer: {
     marginTop: 12,

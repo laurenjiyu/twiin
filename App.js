@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import RootNavigator from './navigation/RootNavigator';
+import LoginScreen from './screens/LoginScreen';
+import TabNavigator from './navigation/TabNavigator';
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   return (
     <NavigationContainer>
-      <RootNavigator />
+      {isLoggedIn ? (
+        <TabNavigator />
+      ) : (
+        <LoginScreen onLogin={() => setIsLoggedIn(true)} />
+      )}
     </NavigationContainer>
   );
 };
