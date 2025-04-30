@@ -44,3 +44,5 @@ ios/
 # Misc
 *.log
 *.tmp
+
+package-lock.json
