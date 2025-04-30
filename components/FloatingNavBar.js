@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: 20,
-    left: 20,
-    right: 20,
+    left: 100,
+    right: 100,
     flexDirection: 'row',
     backgroundColor: 'black',
     borderRadius: 30,

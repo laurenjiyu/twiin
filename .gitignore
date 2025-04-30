@@ -6,6 +6,8 @@ dist/
 build/
 web-build/
 
+package-lock.json
+
 # Expo
 .expo/
 .expo-shared/
@@ -44,3 +46,5 @@ ios/
 # Misc
 *.log
 *.tmp
+
+package-lock.json
