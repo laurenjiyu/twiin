@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
   },
   splashText: {
     fontWeight: "bold",
-    color: Theme.colors.textPrimary,
-    fontSize: 60,
+    fontFamily: Theme.fonts.title_bold,
+    fontSize: 70,
     textAlign: "center",
   },
   buttonContainer: {

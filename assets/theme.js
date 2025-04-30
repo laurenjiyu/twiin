@@ -7,5 +7,11 @@ export default {
     sizes: {
 
     },
+    fonts: {
+        title_bold: 'Ojuju_700Bold',
+        title: 'Ojuju_400Regular',
+        body_bold: 'SpaceGrotesk_700Bold',
+        body: 'SpaceGrotesk_400Regular',
+    }
   };
   
