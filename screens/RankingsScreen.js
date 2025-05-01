@@ -19,7 +19,7 @@ import { supabase } from "../db";
 const generateLeaderboard = async () => {
   const { data, error } = await supabase
     .from("users")
-    .select("name, avatar_url, total_points")
+    .select("id, name, avatar_url, total_points")
     .order("total_points", { ascending: false });
 
   if (error) {
@@ -231,11 +231,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end", // Align the trophy and points to the right
     gap: 6, // Controls spacing between trophy and points
   },
-  points: {
-    fontSize: 18,
-    color: "#666",
-    fontFamily: "SpaceGrotesk_400Regular", // Apply the loaded font
-  },
+  points: {},
   trophyIcon: {
     width: 20,
     height: 20,
