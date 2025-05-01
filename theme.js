@@ -14,7 +14,9 @@ const theme = {
     text: {
       body: 'SpaceGrotesk_400Regular',
       heading: 'SpaceGrotesk_700Bold',
-    },
+      title_bold: 'Ojuju_800ExtraBold',
+      title: 'Ojuju_400Regular',
+    }
   };
   
   export default theme;
