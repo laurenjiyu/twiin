@@ -1,10 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Button, ActivityIndicator } from 'react-native';
-import theme from '../theme';
-import { supabase, getChallenges, getUserMatch } from '../db';
-import defaultProfile from '../assets/default_profile.jpg';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Button,
+  ActivityIndicator,
+} from "react-native";
+import theme from "../theme";
+import { supabase, getChallenges, getUserMatch } from "../db";
+import defaultProfile from "../assets/default_profile.jpg";
 // Array of difficulty levels
-const difficulties = ['Easy', 'Medium', 'Hard'];
+const difficulties = ["Easy", "Medium", "Hard"];
 
 const HomeScreen = () => {
   const [challenges, setChallenges] = useState([]);
@@ -20,13 +28,16 @@ const HomeScreen = () => {
         setLoading(true);
         const { data: chData, error: chErr } = await getChallenges();
         if (chErr || !chData) {
-          console.error('Error fetching challenges', chErr || 'No data returned');
+          console.error(
+            "Error fetching challenges",
+            chErr || "No data returned"
+          );
           setChallenges([]);
         } else {
           setChallenges(chData);
         }
       } catch (err) {
-        console.error('Unexpected error fetching challenges', err);
+        console.error("Unexpected error fetching challenges", err);
         setChallenges([]);
       } finally {
         setLoading(false);
@@ -40,9 +51,14 @@ const HomeScreen = () => {
     const loadMatch = async () => {
       if (!challenges.length) return;
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      const { match: mData, error: mErr } = await getUserMatch("b35d7dbb-f6a6-4356-aa4b-197427e79789", challenges[currentIdx].id);  // USER-ID GOES HERE
-      if (mErr) console.error('Error fetching match', mErr);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const { match: mData, error: mErr } = await getUserMatch(
+        "b35d7dbb-f6a6-4356-aa4b-197427e79789",
+        challenges[currentIdx].id
+      ); // USER-ID GOES HERE
+      if (mErr) console.error("Error fetching match", mErr);
       else setMatch(mData);
       setLoading(false);
     };
@@ -100,9 +116,11 @@ const HomeScreen = () => {
         <Text style={styles.cardHeader}>YOUR MATCH</Text>
         {match ? (
           <View style={styles.matchContainer}>
-            <Image 
-              source={match.avatar_url ? { uri: match.avatar_url } : defaultProfile} 
-              style={styles.avatar} 
+            <Image
+              source={
+                match.avatar_url ? { uri: match.avatar_url } : defaultProfile
+              }
+              style={styles.avatar}
             />
             <Text style={styles.matchName}>{match.name}</Text>
           </View>
@@ -116,18 +134,41 @@ const HomeScreen = () => {
       {/* PICK A CHALLENGE */}
       <Text style={styles.sectionHeader}>PICK A CHALLENGE</Text>
       <View style={styles.challengeCard}>
-        <TouchableOpacity onPress={() => setCurrentIdx(i => Math.max(i - 1, 0))} disabled={currentIdx === 0}>
-          <Text style={[styles.arrow, currentIdx === 0 && styles.disabledArrow]}>‹</Text>
+        <TouchableOpacity
+          onPress={() => setCurrentIdx((i) => Math.max(i - 1, 0))}
+          disabled={currentIdx === 0}
+        >
+          <Text
+            style={[styles.arrow, currentIdx === 0 && styles.disabledArrow]}
+          >
+            ‹
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.challengeContent}>
           <Text style={styles.difficultyText}>{difficulties[currentIdx]}</Text>
           <Text style={styles.taskText}>TASK</Text>
-          <Button title="Select" onPress={() => console.log('Selected', difficulties[currentIdx])} color={theme.colors.submitButton} />
+          <Button
+            title="Select"
+            onPress={() => console.log("Selected", difficulties[currentIdx])}
+            color={theme.colors.submitButton}
+          />
         </View>
 
-        <TouchableOpacity onPress={() => setCurrentIdx(i => Math.min(i + 1, difficulties.length - 1))} disabled={currentIdx === difficulties.length - 1}>
-          <Text style={[styles.arrow, currentIdx === difficulties.length - 1 && styles.disabledArrow]}>›</Text>
+        <TouchableOpacity
+          onPress={() =>
+            setCurrentIdx((i) => Math.min(i + 1, difficulties.length - 1))
+          }
+          disabled={currentIdx === difficulties.length - 1}
+        >
+          <Text
+            style={[
+              styles.arrow,
+              currentIdx === difficulties.length - 1 && styles.disabledArrow,
+            ]}
+          >
+            ›
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -142,17 +183,17 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: theme.colors.background,
   },
   timerContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -160,7 +201,7 @@ const styles = StyleSheet.create({
   },
   timerText: {
     fontSize: 25,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: theme.colors.text,
   },
   matchCard: {
@@ -170,7 +211,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     marginBottom: 20,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 5, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
@@ -178,11 +219,11 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
     color: theme.colors.text,
-    alignContent: 'center',
-    textAlign: 'center',
+    alignContent: "center",
+    textAlign: "center",
   },
   matchContainer: {
     flexDirection: "row",
@@ -197,7 +238,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     fontSize: 16,
     color: theme.colors.text,
-    fontFamily: theme.text.body
+    fontFamily: theme.text.body,
   },
   noMatchText: {
     fontSize: 16,
@@ -213,7 +254,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   challengeCard: {
-    width: '100%',
+    width: "100%",
     flexGrow: 1,
     backgroundColor: theme.colors.challengeCard,
     borderRadius: 10,
@@ -221,14 +262,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 20,
     marginBottom: 100,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 5, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   arrow: {
     fontSize: 30,
@@ -238,11 +279,11 @@ const styles = StyleSheet.create({
     color: "#ccc",
   },
   challengeContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   difficultyText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: theme.colors.text,
   },
   taskText: {

@@ -1,23 +1,42 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
-// import { GoldTrophy, SilverTrophy, BronzeTrophy } from "./twiin/assets/icons"; // Adjust path as needed
-// Importing PNG icons from the assets folder
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Button,
+  ActivityIndicator,
+} from "react-native";
+import theme from "../theme";
 import GoldTrophy from "../assets/icons/GoldTrophy.png";
 import SilverTrophy from "../assets/icons/SilverTrophy.png";
 import BronzeTrophy from "../assets/icons/BronzeTrophy.png";
 import DefaultTrophy from "../assets/icons/DefaultTrophy.png";
+import { supabase } from "../db";
 
-// const generateRankedList = (users) => {
-//   return users
-//     .sort((a, b) => b.points - a.points)
-//     .map((user, index) => ({
-//       ...user,
-//       rank: index + 1,
-//     }));
-// };
+const generateLeaderboard = async () => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("name, avatar_url, total_points")
+    .order("total_points", { ascending: false });
 
-// Sample leaderboard
-const leaderboardData = [
+  if (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
+
+  return data.map((user, index) => ({
+    rank: index + 1,
+    username: user.name,
+    avatarUrl: user.avatar_url || "https://via.placeholder.com/100", //placeholder bc avatar_url null
+    points: user.total_points,
+  }));
+};
+
+//Sample leaderboard
+const sampleData = [
   {
     rank: 1,
     username: "Alice",
@@ -41,48 +60,6 @@ const leaderboardData = [
     username: "Diana",
     avatarUrl: "https://via.placeholder.com/100",
     points: 980,
-  },
-  {
-    rank: 5,
-    username: "Ethan",
-    avatarUrl: "https://via.placeholder.com/100",
-    points: 940,
-  },
-  {
-    rank: 6,
-    username: "Fay",
-    avatarUrl: "https://via.placeholder.com/100",
-    points: 900,
-  },
-  {
-    rank: 7,
-    username: "George",
-    avatarUrl: "https://via.placeholder.com/100",
-    points: 880,
-  },
-  {
-    rank: 8,
-    username: "George",
-    avatarUrl: "https://via.placeholder.com/100",
-    points: 880,
-  },
-  {
-    rank: 9,
-    username: "George",
-    avatarUrl: "https://via.placeholder.com/100",
-    points: 800,
-  },
-  {
-    rank: 10,
-    username: "George",
-    avatarUrl: "https://via.placeholder.com/100",
-    points: 750,
-  },
-  {
-    rank: 11,
-    username: "George",
-    avatarUrl: "https://via.placeholder.com/100",
-    points: 700,
   },
 ];
 
@@ -108,104 +85,126 @@ const TrophyIcon = ({ rank }) => {
 };
 
 const RankingsScreen = () => {
-  // const [leaderboardData, setLeaderboardData] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  //fetch user info
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
 
-  // // Fetch leaderboard data from Supabase (or replace with local static data)
-  // useEffect(() => {
-  //   const fetchLeaderboardData = async () => {
-  //     // Example fetch from Supabase (commented out for now)
-  //     /*
-  //     const { data, error } = await supabase.from('users').select('username, avatarUrl, points');
-  //     if (error) {
-  //       console.log('Error fetching leaderboard data', error);
-  //     } else {
-  //       setLeaderboardData(data);
-  //     }
-  //     */
+      if (sessionError || !sessionData.session) {
+        console.error("Error fetching session:", sessionError);
+        return; //if user not logged in
+      }
 
-  //     // COMMENT OUT this block when Supabase is integrated
-  //     const rawUserData = [
-  //       { username: 'Alice', avatarUrl: 'https://via.placeholder.com/100', points: 1200 },
-  //       { username: 'Bob', avatarUrl: 'https://via.placeholder.com/100', points: 1100 },
-  //       { username: 'Charlie', avatarUrl: 'https://via.placeholder.com/100', points: 1050 },
-  //       { username: 'Diana', avatarUrl: 'https://via.placeholder.com/100', points: 980 },
-  //       { username: 'Ethan', avatarUrl: 'https://via.placeholder.com/100', points: 940 },
-  //       { username: 'Fay', avatarUrl: 'https://via.placeholder.com/100', points: 900 },
-  //     ];
-  //     setLeaderboardData(rawUserData);
-  //   };
+      const currentUser = sessionData.session.user;
+      console.log("User:", currentUser);
+      setCurrentUserId(currentUser.id);
+    };
 
-  //   fetchLeaderboardData();
-  // }, []);
+    fetchUser();
+  }, []);
 
-  // // Generate the ranked leaderboard based on points (commented for now)
-  // const rankedUsers = generateRankedList(leaderboardData);
+  //create leaderboard
+  const [leaderboardData, setLeaderboardData] = useState([]);
 
-  //prev leaderboard mapping
-  // {leaderboardData.map((user) => (
-  //   <View key={user.rank} style={styles.card}>
-  //     <View style={styles.rankRow}>
-  //       <Text style={styles.rankText}>#{user.rank}</Text>
-  //       <TrophyIcon rank={user.rank} />
-  //     </View>
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      const data = await generateLeaderboard();
+      setLeaderboardData(data.length ? data : sampleData);
+    };
 
-  //     <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-  //     <Text style={styles.username}>{user.username}</Text>
-  //     <Text style={styles.points}>{user.points} pts</Text>
-  //   </View>
-  // ))}
+    fetchLeaderboard();
+  }, []);
+
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <Text style={styles.header}>RANKING</Text>
+    <View style={[styles.container]}>
+      <View style={[styles.titleContainer]}>
+        <Text style={[styles.header]}>LEADERBOARD</Text>
+      </View>
 
-      {leaderboardData.map((user) => (
-        <View key={user.rank} style={styles.card}>
-          <View style={styles.rankRow}>
-            <Text style={styles.rankText}>#{user.rank}</Text>
-            <Text style={styles.username}>{user.username}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {leaderboardData.map((user) => {
+          const isCurrentUser =
+            user.userId === currentUserId ||
+            user.rank ===
+              leaderboardData.findIndex((u) => u.userId === currentUserId) + 1;
 
-            {/* Wrap Trophy and Points in a container aligned to the right */}
-            <View style={styles.pointsTrophyContainer}>
-              {/* Show trophy for rank 1-3 */}
-              {<TrophyIcon rank={user.rank} />}
-              <Text style={styles.points}>{user.points} pts</Text>
+          return (
+            <View
+              key={user.rank}
+              style={isCurrentUser ? styles.userCard : styles.card}
+            >
+              <View style={styles.rankRow}>
+                <Text style={styles.rankText}>#{user.rank}</Text>
+                <Text style={styles.username}>{user.username}</Text>
+
+                <View style={styles.pointsTrophyContainer}>
+                  <TrophyIcon rank={user.rank} />
+                  <Text style={styles.points}>{user.points} pts</Text>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
-      ))}
-    </ScrollView>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 };
 
-// const RankingsScreen = () => {
-//   return (
-//     <View style={styles.container}>
-//       <Text>Leaderboard Rankings</Text>
-//     </View>
-//   );
-// };
-
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.leaderboard,
+  },
+  titleContainer: {
+    width: "100%", // Full width of the screen
+    padding: 10,
+    marginBottom: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
+    backgroundColor: theme.colors.yourMatchCard,
+    alignItems: "center",
+  },
   scrollContainer: {
+    flexGrow: 1,
     padding: 20,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: theme.colors.leaderboard,
   },
   header: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginTop: 10,
+    marginBottom: 10,
+    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
   },
   card: {
-    width: "100%", // Full width of the screen
-    backgroundColor: "#fff",
+    width: "100%",
+    backgroundColor: theme.colors.background,
     borderRadius: 10,
     padding: 20,
     marginBottom: 15,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  userCard: {
+    width: "100%",
+    backgroundColor: theme.colors.background,
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 15,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
     elevation: 2,
   },
   rankRow: {
@@ -218,11 +217,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     marginRight: 5,
+    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
   },
   username: {
     fontSize: 22,
     fontWeight: "600",
     marginRight: 10, // Adds space between username and pointsTrophyContainer
+    fontFamily: "SpaceGrotesk_400Regular", // Apply the loaded font
   },
   pointsTrophyContainer: {
     flexDirection: "row",
@@ -233,6 +234,7 @@ const styles = StyleSheet.create({
   points: {
     fontSize: 18,
     color: "#666",
+    fontFamily: "SpaceGrotesk_400Regular", // Apply the loaded font
   },
   trophyIcon: {
     width: 20,
@@ -241,11 +243,3 @@ const styles = StyleSheet.create({
 });
 
 export default RankingsScreen;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-// });
