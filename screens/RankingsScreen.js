@@ -189,8 +189,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 3, height: 6 },
+    shadowOpacity: 0.7,
     shadowRadius: 5,
     elevation: 2,
   },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "600",
     marginRight: 10, // Adds space between username and pointsTrophyContainer
-    fontFamily: "SpaceGrotesk_400Regular", // Apply the loaded font
+    fontFamily: "SpaceGrotesk_400RBold", // Apply the loaded font
   },
   pointsTrophyContainer: {
     flexDirection: "row",
@@ -235,6 +235,15 @@ const styles = StyleSheet.create({
   trophyIcon: {
     width: 20,
     height: 20,
+  },
+  shadowIOS: {
+    shadowColor: "#000",
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+  shadowAndroid: {
+    elevation: 6,
   },
 });
 

@@ -126,7 +126,7 @@ export default function LoginScreen({ navigation }) {
             backgroundColor={theme.colors.createAccountButton}
             fontSize={18}
           >
-            {creatingAccount ? "CREATING ACCOUNT": "SIGN IN WITH EMAIL"}
+            {creatingAccount ? "CREATING ACCOUNT" : "SIGN IN WITH EMAIL"}
           </Button>
 
           <TouchableOpacity
