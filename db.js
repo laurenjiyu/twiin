@@ -12,7 +12,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 //    - avatarFile: { uri, type, name }  (e.g. from ImagePicker)
 export async function createUser(userData, avatarFile = null) {
   let avatar_url = null;
-
+  console.log("got to create user")
   // 2a) If an avatar file was provided, upload it to Storage
   if (avatarFile) {
     // Convert RN file URI into a Blob
