@@ -25,7 +25,7 @@
       "package": "com.anonymous.cs147l24aua4"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",

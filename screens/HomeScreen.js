@@ -16,7 +16,8 @@ const difficulties = ["Easy", "Medium", "Hard"];
 
 const HomeScreen = () => {
   const [challenges, setChallenges] = useState([]);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
+  const [challengeIdx, setChallengeIdx] = useState(0);  // New state for challenge index
   const [match, setMatch] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
   const [loading, setLoading] = useState(true);
@@ -63,12 +64,12 @@ const HomeScreen = () => {
       setLoading(false);
     };
     loadMatch();
-  }, [challenges, currentIdx]);
+  }, [challenges, challengeIdx]);
 
   // 3) Timer update for current challenge
   useEffect(() => {
     if (!challenges.length) return;
-    const endTime = new Date(challenges[currentIdx].end_time);
+    const endTime = new Date(challenges[challengeIdx].end_time);
     const updateTimer = () => {
       const now = new Date();
       const distance = endTime - now;
@@ -87,7 +88,7 @@ const HomeScreen = () => {
     updateTimer();
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [challenges, currentIdx]);
+  }, [challenges, challengeIdx]);
 
   if (loading) {
     return (
@@ -146,7 +147,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
 
         <View style={styles.challengeContent}>
-          <Text style={styles.difficultyText}>{difficulties[currentIdx]}</Text>
+          <Text style={styles.difficultyText}>{difficulties[currentDifficultyIdx]}</Text>
           <Text style={styles.taskText}>TASK</Text>
           <Button
             title="Select"
