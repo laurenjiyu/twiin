@@ -10,7 +10,7 @@ import {
 import Button from "../components/Button";
 import { StatusBar } from "expo-status-bar";
 import theme from "../theme";
-import db from "../database/db";
+import { supabase as db, createUser } from "../db";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -48,14 +48,38 @@ export default function LoginScreen({ navigation }) {
     setDecisionText("CREATE ACCOUNT");
     setLoading(true);
     try {
-      const { error } = await db.auth.signUp({ email, password });
-      if (error) {
-        Alert.alert("Signup failed", error.message);
-      } else {
-        Alert.alert("Success", "Account created! Please check your email.");
-        setCreatingAccount(false);
-        setShowForm(false);
+      // Step 1: Create the auth account
+      console.log("past try");
+      const { data: signUpData, error: signUpError } = await db.auth.signUp({
+        email,
+        password,
+      });
+
+      if (signUpError) {
+        Alert.alert("Signup failed", signUpError.message);
+        return;
       }
+
+      const userId = signUpData?.user?.id;
+
+      if (!userId) {
+        Alert.alert("Signup failed", "User ID not returned.");
+        return;
+      }
+
+      // Step 2: Create the user profile in your 'users' table
+      const { error: profileError } = await createUser({
+        id: userId,
+        email: email,
+      });
+
+      if (profileError) {
+        Alert.alert("User profile creation failed", profileError.message);
+        return;
+      }
+
+      // Step 3: Navigate into app
+      navigation.replace("Main");
     } catch (err) {
       console.error(err);
       Alert.alert("Unexpected error", "Please try again.");
@@ -89,14 +113,11 @@ export default function LoginScreen({ navigation }) {
           </View>
 
           <Button
-            onPress={() => {
-              setCreatingAccount(true);
-              setShowForm(true);
-            }}
+            onPress={() => navigation.navigate("Signup")}
             backgroundColor={theme.colors.createAccountButton}
             fontSize={18}
           >
-            {accountDecisionText}
+            CREATE ACCOUNT
           </Button>
         </View>
       ) : (
@@ -126,7 +147,7 @@ export default function LoginScreen({ navigation }) {
             backgroundColor={theme.colors.createAccountButton}
             fontSize={18}
           >
-            {creatingAccount ? "CREATING ACCOUNT" : "SIGN IN WITH EMAIL"}
+            {creatingAccount ? "CREATE ACCOUNT" : "SIGN IN WITH EMAIL"}
           </Button>
 
           <TouchableOpacity
