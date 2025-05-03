@@ -29,6 +29,7 @@ const generateLeaderboard = async () => {
 
   return data.map((user, index) => ({
     rank: index + 1,
+    userId: user.id,
     username: user.name,
     avatarUrl: user.avatar_url || "https://via.placeholder.com/100", //placeholder bc avatar_url null
     points: user.total_points,
@@ -125,10 +126,7 @@ const RankingsScreen = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {leaderboardData.map((user) => {
-          const isCurrentUser =
-            user.userId === currentUserId ||
-            user.rank ===
-              leaderboardData.findIndex((u) => u.userId === currentUserId) + 1;
+          const isCurrentUser = user.userId === currentUserId;
 
           return (
             <View
@@ -201,11 +199,14 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 15,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 2,
+    // Bright shadow/glow
+    shadowColor: "#ffe066", // bright yellow
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: "#ffe066",
   },
   rankRow: {
     flexDirection: "row",

@@ -40,10 +40,26 @@ const defaultUsername = "First Twiin";
 
 const ProfileScreen = ({ navigation }) => {
   const screenHeight = Dimensions.get("window").height;
-  // const [editing, setEditing] = useState(false);
-  // if (editing) {//switch to editing screen
-  //   return <EditProfileScreen onDone={() => setEditing(false)} />;
-  // }
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [profileBio, setProfileBio] = useState("");
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("avatar_url, profile_bio")
+          .eq("id", user.id)
+          .single();
+        setAvatarUrl(profile?.avatar_url || null);
+        setProfileBio(profile?.profile_bio || "");
+      }
+    };
+    fetchAvatar();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -60,9 +76,14 @@ const ProfileScreen = ({ navigation }) => {
         {/* top takes up 0.4 of the screen*/}
 
         <Text style={styles.username}>{defaultUsername}</Text>
-        <Image source={defaultProfile} style={styles.profileImage} />
+        <Image
+          source={avatarUrl ? { uri: avatarUrl } : defaultProfile}
+          style={styles.profileImage}
+        />
         <Text style={styles.bioText}>
-          Hello I'm the first twiin and I want to play games. Huzzah!
+          {profileBio && profileBio.trim().length > 0
+            ? profileBio
+            : "All praise the first twiin! Huzzah!"}
         </Text>
       </View>
       <View style={[styles.bottomSection]}>
