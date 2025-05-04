@@ -6,13 +6,14 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  Button,
   ActivityIndicator,
   Dimensions,
 } from "react-native";
 import theme from "../theme";
 import { supabase } from "../db";
 import defaultProfile from "../assets/icons/anonymous.png"; //in square format rn
+import Button from "../components/Button";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 //Data of previous matches (sample data)
 const prevTwiins = [
@@ -35,21 +36,54 @@ const prevTwiins = [
     date: "04/22/2025",
   },
 ];
-const defaultUsername = "@first.twiin";
+const defaultUsername = "First Twiin";
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   const screenHeight = Dimensions.get("window").height;
-  //do we want the profile to be circular?
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [profileBio, setProfileBio] = useState("");
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("avatar_url, profile_bio")
+          .eq("id", user.id)
+          .single();
+        setAvatarUrl(profile?.avatar_url || null);
+        setProfileBio(profile?.profile_bio || "");
+      }
+    };
+    fetchAvatar();
+  }, []);
 
   return (
     <View style={styles.container}>
+      <View style={styles.editProfileContainer}>
+        <Button
+          backgroundColor="#f78da7"
+          onPress={() => navigation.navigate("EditProfile")}
+        >
+          <Icon name="menu" size={24} color="black" />
+        </Button>
+      </View>
+
       <View style={[styles.topSection, { height: screenHeight * 0.35 }]}>
         {/* top takes up 0.4 of the screen*/}
 
         <Text style={styles.username}>{defaultUsername}</Text>
-        <Image source={defaultProfile} style={styles.profileImage} />
+        <Image
+          source={avatarUrl ? { uri: avatarUrl } : defaultProfile}
+          style={styles.profileImage}
+        />
         <Text style={styles.bioText}>
-          Hello I'm the first twiin and I want to play games. Huzzah!
+          {profileBio && profileBio.trim().length > 0
+            ? profileBio
+            : "All praise the first twiin! Huzzah!"}
         </Text>
       </View>
       <View style={[styles.bottomSection]}>
@@ -101,7 +135,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     resizeMode: "cover",
-    borderRadius: 2,
+    borderRadius: 700,
     marginBottom: 20,
   },
   bioText: {
@@ -124,10 +158,11 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     width: "100%", // Full width of the screen
+    alignItems: "center",
     padding: 6,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.6,
     shadowRadius: 5,
     elevation: 0,
     backgroundColor: theme.colors.yourMatchCard,
@@ -155,30 +190,39 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: theme.colors.background,
     borderRadius: 10,
-    padding: 20,
+    padding: 12,
     marginBottom: 15,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 3, height: 6 },
+    shadowOpacity: 1,
     shadowRadius: 5,
     elevation: 2,
   },
   date: {
     fontSize: 16,
-    color: "#666",
+    //color: "#666",
     fontFamily: "SpaceGrotesk_400Regular",
   },
   rankText: {
     fontSize: 16,
-    color: "#666",
+    //color: "#666",
     fontFamily: "SpaceGrotesk_400Regular",
   },
   twiin: {
     fontWeight: "bold",
     fontSize: 20,
-    color: "#666",
+    //color: "#666",
     fontFamily: "SpaceGrotesk_700Bold",
+  },
+  editProfileContainer: {
+    position: "absolute", // Allows top/right positioning
+    top: 20,
+    right: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    zIndex: 999,
   },
 });
 

@@ -16,7 +16,8 @@ const difficulties = ["Easy", "Medium", "Hard"];
 
 const HomeScreen = () => {
   const [challenges, setChallenges] = useState([]);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
+  const [challengeIdx, setChallengeIdx] = useState(0); // New state for challenge index
   const [match, setMatch] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
   const [loading, setLoading] = useState(true);
@@ -56,19 +57,19 @@ const HomeScreen = () => {
       } = await supabase.auth.getUser();
       const { match: mData, error: mErr } = await getUserMatch(
         "b35d7dbb-f6a6-4356-aa4b-197427e79789",
-        challenges[currentIdx].id
+        challenges[currentDifficultyIdx].id
       ); // USER-ID GOES HERE
       if (mErr) console.error("Error fetching match", mErr);
       else setMatch(mData);
       setLoading(false);
     };
     loadMatch();
-  }, [challenges, currentIdx]);
+  }, [challenges, challengeIdx]);
 
   // 3) Timer update for current challenge
   useEffect(() => {
     if (!challenges.length) return;
-    const endTime = new Date(challenges[currentIdx].end_time);
+    const endTime = new Date(challenges[challengeIdx].end_time);
     const updateTimer = () => {
       const now = new Date();
       const distance = endTime - now;
@@ -87,7 +88,7 @@ const HomeScreen = () => {
     updateTimer();
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [challenges, currentIdx]);
+  }, [challenges, challengeIdx]);
 
   if (loading) {
     return (
@@ -135,36 +136,46 @@ const HomeScreen = () => {
       <Text style={styles.sectionHeader}>PICK A CHALLENGE</Text>
       <View style={styles.challengeCard}>
         <TouchableOpacity
-          onPress={() => setCurrentIdx((i) => Math.max(i - 1, 0))}
-          disabled={currentIdx === 0}
+          onPress={() => setcurrentDifficultyIdx((i) => Math.max(i - 1, 0))}
+          disabled={currentDifficultyIdx === 0}
         >
           <Text
-            style={[styles.arrow, currentIdx === 0 && styles.disabledArrow]}
+            style={[
+              styles.arrow,
+              currentDifficultyIdx === 0 && styles.disabledArrow,
+            ]}
           >
             ‹
           </Text>
         </TouchableOpacity>
 
         <View style={styles.challengeContent}>
-          <Text style={styles.difficultyText}>{difficulties[currentIdx]}</Text>
+          <Text style={styles.difficultyText}>
+            {difficulties[currentDifficultyIdx]}
+          </Text>
           <Text style={styles.taskText}>TASK</Text>
           <Button
             title="Select"
-            onPress={() => console.log("Selected", difficulties[currentIdx])}
+            onPress={() =>
+              console.log("Selected", difficulties[currentDifficultyIdx])
+            }
             color={theme.colors.submitButton}
           />
         </View>
 
         <TouchableOpacity
           onPress={() =>
-            setCurrentIdx((i) => Math.min(i + 1, difficulties.length - 1))
+            setcurrentDifficultyIdx((i) =>
+              Math.min(i + 1, difficulties.length - 1)
+            )
           }
-          disabled={currentIdx === difficulties.length - 1}
+          disabled={currentDifficultyIdx === difficulties.length - 1}
         >
           <Text
             style={[
               styles.arrow,
-              currentIdx === difficulties.length - 1 && styles.disabledArrow,
+              currentDifficultyIdx === difficulties.length - 1 &&
+                styles.disabledArrow,
             ]}
           >
             ›
