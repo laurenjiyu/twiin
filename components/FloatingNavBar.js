@@ -53,13 +53,13 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 20,
-    left: 100,
-    right: 100,
+    bottom: 40,
+    left: 80,
+    right: 80,
     flexDirection: "row",
     backgroundColor: "black",
     borderRadius: 30,
-    height: 70,
+    height: 50,
     justifyContent: "space-around",
     alignItems: "center",
     zIndex: 100,

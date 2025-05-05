@@ -6,6 +6,7 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import Button from "../components/Button";
 import { StatusBar } from "expo-status-bar";
@@ -65,6 +66,7 @@ export default function SignupScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.centeredContent}>
+        <Image source={require('../assets/icons/twiin_logo.png')} style={styles.logo}/>
         <Text style={styles.splashText}>Twiin</Text>
         <Text style={styles.bodyText}>Create your account</Text>
         <TextInput
@@ -124,6 +126,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     flex: 1,
+  },
+  logo: {
+    height: '20%',
+    resizeMode: 'contain',
   },
   splashText: {
     fontWeight: "bold",
