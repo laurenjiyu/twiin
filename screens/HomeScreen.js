@@ -135,7 +135,6 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TopBar groupName="CS278" points={userPoints} />
       {/* Countdown Timer */}
       <View style={styles.timerContainer}>
         {timeLeft.expired ? (

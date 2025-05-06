@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.uploadMedia,
+    backgroundColor: theme.colors.yourMatchCard,
     alignItems: "center",
   },
   header: {
@@ -237,9 +237,8 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 10,
-    backgroundColor: "#FAFAF7",
-    alignItems: "center",
+    padding: 24,
+    backgroundColor: theme.colors.leaderboard,
   },
   rankRow: {
     flexDirection: "row",
