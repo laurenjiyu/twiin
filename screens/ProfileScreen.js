@@ -15,6 +15,7 @@ import { supabase, getAvatarUrl } from "../db";
 import defaultProfile from "../assets/icons/anonymous.png"; //in square format rn
 import Button from "../components/Button";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import TopBar from "../components/TopBar";
 
 //Data of previous matches (sample data)
 const prevTwiins = [
@@ -45,6 +46,7 @@ const ProfileScreen = ({ navigation }) => {
   const [profileBio, setProfileBio] = useState("");
   const [username, setUsername] = useState(defaultUsername);
   const [avatarBase64, setAvatarBase64] = useState(null);
+  const [userPoints, setUserPoints] = useState(0);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -60,13 +62,14 @@ const ProfileScreen = ({ navigation }) => {
       const user = session.user;
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("name, profile_bio")
+        .select("name, profile_bio", "total_points")
         .eq("id", user.id)
         .single();
 
       if (userError) {
         console.error("Error fetching user data:", userError);
       }
+      setUserPoints(userData?.total_points ?? 0); //set for topbar
 
       setUsername(userData?.name || defaultUsername);
       setProfileBio(userData?.profile_bio || "");
@@ -103,17 +106,14 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <TopBar groupName="CS278" points={userPoints} />
+
       <View style={styles.editProfileContainer}>
         <Button
-          backgroundColor="#f78da7"
+          backgroundColor={theme.colors.rematchButton}
           onPress={() => navigation.navigate("EditProfile")}
         >
-          <Icon
-            name="menu"
-            size={24}
-            color="black"
-            style={{ marginBottom: 4 }}
-          />
+          <Icon name="settings" size={26} color="black" />
         </Button>
       </View>
 
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   editProfileContainer: {
     position: "absolute", // Allows top/right positioning
-    top: 20,
+    top: 60,
     right: 30,
     width: 50,
     height: 50,

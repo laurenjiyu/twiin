@@ -15,6 +15,7 @@ import SilverTrophy from "../assets/icons/SilverTrophy.png";
 import BronzeTrophy from "../assets/icons/BronzeTrophy.png";
 import DefaultTrophy from "../assets/icons/DefaultTrophy.png";
 import { supabase } from "../db";
+import TopBar from "../components/TopBar";
 
 const generateLeaderboard = async () => {
   const { data, error } = await supabase
@@ -109,6 +110,12 @@ const RankingsScreen = () => {
   //create leaderboard
   const [leaderboardData, setLeaderboardData] = useState([]);
 
+  //find current user points for topbar
+  const currentUser = leaderboardData.find(
+    (user) => user.userId === currentUserId
+  );
+  const currentPoints = currentUser?.points ?? 0;
+
   useEffect(() => {
     const fetchLeaderboard = async () => {
       const data = await generateLeaderboard();
@@ -120,10 +127,11 @@ const RankingsScreen = () => {
 
   return (
     <View style={[styles.container]}>
+      <TopBar groupName="CS278" points={currentPoints} />
+
       <View style={styles.blueHeader}>
         <Text style={styles.blueHeaderText}>TOP TWIINS</Text>
       </View>
-
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {leaderboardData.map((user) => {
           const isCurrentUser = user.userId === currentUserId;
@@ -160,7 +168,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.leaderboard, // strong blue
     paddingVertical: 16,
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 5,
   },
   blueHeaderText: {
     color: "#fff",

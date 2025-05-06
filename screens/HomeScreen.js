@@ -13,6 +13,7 @@ import { supabase, getChallenges, getUserMatch } from "../db";
 import defaultProfile from "../assets/default_profile.jpg";
 // Array of difficulty levels
 const difficulties = ["Easy", "Medium", "Hard"];
+import TopBar from "../components/TopBar";
 
 const HomeScreen = () => {
   const [challenges, setChallenges] = useState([]);
@@ -21,6 +22,35 @@ const HomeScreen = () => {
   const [match, setMatch] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
   const [loading, setLoading] = useState(true);
+
+  //for topbar (not for challenge/matching)
+  const [userPoints, setUserPoints] = useState(0);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      if (sessionError || !session || !session.user) {
+        console.error("User not authenticated");
+        return;
+      }
+
+      const user = session.user;
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("name, profile_bio", "total_points")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+      }
+
+      setUserPoints(userData?.total_points ?? 0); //set for topbar
+    };
+  }, []);
 
   // 1) Load challenges on mount
   useEffect(() => {
@@ -105,6 +135,7 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
+      <TopBar groupName="CS278" points={userPoints} />
       {/* Countdown Timer */}
       <View style={styles.timerContainer}>
         {timeLeft.expired ? (
@@ -194,7 +225,7 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    //padding: 20,
     backgroundColor: theme.colors.background,
   },
   loadingContainer: {
