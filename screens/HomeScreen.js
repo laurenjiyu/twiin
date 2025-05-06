@@ -50,13 +50,18 @@ const HomeScreen = () => {
   // 2) Load match whenever challenges or index change
   useEffect(() => {
     const loadMatch = async () => {
+      // Log the current index and challenges array
+      console.log("loadMatch called. Current index:", index);
+      console.log("Challenges array:", challenges);
+
       if (!challenges.length) return;
       setLoading(true);
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       const { match: mData, error: mErr } = await getUserMatch(
-        "b35d7dbb-f6a6-4356-aa4b-197427e79789",
+        "d3b8ab4e-d904-4d23-9122-70eff98ee1b2",
         challenges[currentDifficultyIdx].id
       ); // USER-ID GOES HERE
       if (mErr) console.error("Error fetching match", mErr);

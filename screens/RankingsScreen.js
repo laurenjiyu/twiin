@@ -120,8 +120,8 @@ const RankingsScreen = () => {
 
   return (
     <View style={[styles.container]}>
-      <View style={[styles.titleContainer]}>
-        <Text style={[styles.header]}>LEADERBOARD</Text>
+      <View style={styles.blueHeader}>
+        <Text style={styles.blueHeaderText}>TOP TWIINS</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -153,89 +153,94 @@ const RankingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.leaderboard,
+    backgroundColor: "#F8F8F2", // very light off-white
   },
-  titleContainer: {
-    width: "100%", // Full width of the screen
-    padding: 10,
-    marginBottom: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-    backgroundColor: theme.colors.yourMatchCard,
+  blueHeader: {
+    width: "100%",
+    backgroundColor: theme.colors.leaderboard, // strong blue
+    paddingVertical: 16,
     alignItems: "center",
+    marginBottom: 10,
+  },
+  blueHeaderText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+    letterSpacing: 2,
+    fontFamily: "SpaceGrotesk_700Bold",
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 20,
-    backgroundColor: theme.colors.leaderboard,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginTop: 10,
-    marginBottom: 10,
-    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
+    padding: 8,
+    backgroundColor: "#FAFAF7",
+    alignItems: "center",
   },
   card: {
-    width: "100%",
-    backgroundColor: theme.colors.background,
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 15,
+    width: "95%",
+    backgroundColor: "#FAFAF7",
+    borderRadius: 12,
+    borderWidth: 1.25,
+    borderColor: "#000",
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    marginBottom: 10,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 3, height: 6 },
-    shadowOpacity: 0.7,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 4, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   userCard: {
-    width: "100%",
-    backgroundColor: theme.colors.background,
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 15,
+    width: "95%",
+    backgroundColor: "#FAFAF7",
+    borderRadius: 12,
+    borderColor: "#000",
+    borderWidth: 1.25,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    marginBottom: 10,
     alignItems: "center",
     // Bright shadow/glow
     shadowColor: "#ffe066", // bright yellow
-    shadowOffset: { width: 0, height: 0 },
+    shadowOffset: { width: 0, height: -1 },
     shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 2,
-    borderColor: "#ffe066",
+    shadowRadius: 12,
+    elevation: 1,
   },
   rankRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // Makes sure rank and username are on the left, and trophy + points go to the right
-    width: "100%", // Ensure the row takes full width
+    justifyContent: "space-between",
+    width: "100%",
   },
   rankText: {
     fontSize: 22,
     fontWeight: "bold",
-    marginRight: 5,
-    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
+    marginRight: 10,
+    fontFamily: "SpaceGrotesk_700Bold",
   },
   username: {
     fontSize: 22,
     fontWeight: "600",
-    marginRight: 10, // Adds space between username and pointsTrophyContainer
-    fontFamily: "SpaceGrotesk_400RBold", // Apply the loaded font
+    flex: 1,
+    fontFamily: "SpaceGrotesk_700Bold",
   },
   pointsTrophyContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end", // Align the trophy and points to the right
-    gap: 6, // Controls spacing between trophy and points
+    gap: 6,
   },
-  points: {},
+  points: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginLeft: 4,
+    fontFamily: "SpaceGrotesk_700Bold",
+  },
   trophyIcon: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
+    marginLeft: 2,
   },
   shadowIOS: {
     shadowColor: "#000",
