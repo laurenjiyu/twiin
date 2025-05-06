@@ -15,7 +15,6 @@ import SilverTrophy from "../assets/icons/SilverTrophy.png";
 import BronzeTrophy from "../assets/icons/BronzeTrophy.png";
 import DefaultTrophy from "../assets/icons/DefaultTrophy.png";
 import { supabase } from "../db";
-import TopBar from "../components/TopBar";
 
 const generateLeaderboard = async () => {
   const { data, error } = await supabase
@@ -110,12 +109,6 @@ const RankingsScreen = () => {
   //create leaderboard
   const [leaderboardData, setLeaderboardData] = useState([]);
 
-  //find current user points for topbar
-  const currentUser = leaderboardData.find(
-    (user) => user.userId === currentUserId
-  );
-  const currentPoints = currentUser?.points ?? 0;
-
   useEffect(() => {
     const fetchLeaderboard = async () => {
       const data = await generateLeaderboard();
@@ -127,11 +120,10 @@ const RankingsScreen = () => {
 
   return (
     <View style={[styles.container]}>
-      <TopBar groupName="CS278" points={currentPoints} />
-
-      <View style={styles.blueHeader}>
-        <Text style={styles.blueHeaderText}>TOP TWIINS</Text>
+      <View style={[styles.titleContainer]}>
+        <Text style={[styles.header]}>LEADERBOARD</Text>
       </View>
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {leaderboardData.map((user) => {
           const isCurrentUser = user.userId === currentUserId;
@@ -164,53 +156,51 @@ const RankingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F2", // very light off-white
+    backgroundColor: theme.colors.darkestBlue,
   },
-  blueHeader: {
-    width: "100%",
-    backgroundColor: theme.colors.leaderboard, // strong blue
-    paddingVertical: 16,
-    alignItems: "center",
+  titleContainer: {
+    width: "100%", // Full width of the screen
+    padding: 10,
     marginBottom: 5,
-  },
-  blueHeaderText: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "bold",
-    letterSpacing: 2,
-    fontFamily: "SpaceGrotesk_700Bold",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
+    backgroundColor: theme.colors.blue,
+    alignItems: "center",
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 8,
-    backgroundColor: "#FAFAF7",
-    alignItems: "center",
+    padding: 20,
+    backgroundColor: theme.colors.darkestBlue,
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginTop: 10,
+    marginBottom: 10,
+    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
   },
   card: {
-    width: "95%",
-    backgroundColor: "#FAFAF7",
-    borderRadius: 12,
-    borderWidth: 1.25,
-    borderColor: "#000",
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    marginBottom: 10,
+    width: "100%",
+    backgroundColor: theme.colors.background,
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 15,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 4, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 3, height: 6 },
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
+    elevation: 2,
   },
   userCard: {
-    width: "95%",
-    backgroundColor: theme.colors.yourMatchCard,
-    borderRadius: 12,
-    borderColor: "#000",
-    borderWidth: 1.25,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    marginBottom: 10,
+    width: "100%",
+    backgroundColor: theme.colors.background,
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 15,
     alignItems: "center",
 
     // Bright shadow/glow
@@ -223,36 +213,31 @@ const styles = StyleSheet.create({
   rankRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
+    justifyContent: "space-between", // Makes sure rank and username are on the left, and trophy + points go to the right
+    width: "100%", // Ensure the row takes full width
   },
   rankText: {
     fontSize: 22,
     fontWeight: "bold",
-    marginRight: 10,
-    fontFamily: "SpaceGrotesk_700Bold",
+    marginRight: 5,
+    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
   },
   username: {
     fontSize: 22,
     fontWeight: "600",
-    flex: 1,
-    fontFamily: "SpaceGrotesk_700Bold",
+    marginRight: 10, // Adds space between username and pointsTrophyContainer
+    fontFamily: "SpaceGrotesk_400RBold", // Apply the loaded font
   },
   pointsTrophyContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    justifyContent: "flex-end", // Align the trophy and points to the right
+    gap: 6, // Controls spacing between trophy and points
   },
-  points: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginLeft: 4,
-    fontFamily: "SpaceGrotesk_700Bold",
-  },
+  points: {},
   trophyIcon: {
-    width: 22,
-    height: 22,
-    marginLeft: 2,
+    width: 20,
+    height: 20,
   },
   shadowIOS: {
     shadowColor: "#000",

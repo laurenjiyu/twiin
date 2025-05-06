@@ -8,14 +8,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  Alert,
 } from "react-native";
 import theme from "../theme";
-import { supabase, getAvatarUrl } from "../db";
+import { supabase } from "../db";
 import defaultProfile from "../assets/icons/anonymous.png"; //in square format rn
-import Button from "../components/Button";
+import CustomButton from "../components/Button";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import TopBar from "../components/TopBar";
 
 //Data of previous matches (sample data)
 const prevTwiins = [
@@ -38,96 +36,50 @@ const prevTwiins = [
     date: "04/22/2025",
   },
 ];
-
 const defaultUsername = "First Twiin";
 
 const ProfileScreen = ({ navigation }) => {
   const screenHeight = Dimensions.get("window").height;
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [profileBio, setProfileBio] = useState("");
-  const [username, setUsername] = useState(defaultUsername);
-  const [avatarBase64, setAvatarBase64] = useState(null);
-  const [userPoints, setUserPoints] = useState(0);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchAvatar = async () => {
       const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-      if (sessionError || !session || !session.user) {
-        console.error("User not authenticated");
-        return;
-      }
-
-      const user = session.user;
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("name, profile_bio", "total_points")
-        .eq("id", user.id)
-        .single();
-
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-      }
-      setUserPoints(userData?.total_points ?? 0); //set for topbar
-
-      setUsername(userData?.name || defaultUsername);
-      setProfileBio(userData?.profile_bio || "");
-      // Construct the correct path for the avatar
-      const avatarPath = `avatars/${user.id}.jpg`;
-
-      // Try downloading the avatar
-      const { data, error: downloadError } = await supabase.storage
-        .from("avatars")
-        .download(avatarPath);
-
-      if (downloadError) {
-        console.log("Error downloading avatar image:", downloadError);
-        console.log("Switch to defualt profile");
-        return;
-      }
-
-      // Convert the file to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(data);
-      reader.onloadend = () => {
-        setAvatarBase64(reader.result);
-      };
-
-      if (bioError) {
-        console.error("Error fetching bio:", bioError);
-      } else {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("avatar_url, profile_bio")
+          .eq("id", user.id)
+          .single();
+        setAvatarUrl(profile?.avatar_url || null);
         setProfileBio(profile?.profile_bio || "");
       }
     };
-
-    fetchProfile();
+    fetchAvatar();
   }, []);
 
   return (
     <View style={styles.container}>
-      <TopBar groupName="CS278" points={userPoints} />
-
       <View style={styles.editProfileContainer}>
-        <Button
-          backgroundColor={theme.colors.rematchButton}
+        <CustomButton
+          backgroundColor="#f78da7"
           onPress={() => navigation.navigate("EditProfile")}
         >
-          <Icon name="settings" size={26} color="black" />
-        </Button>
+          <Icon name="menu" size={24} color="black" />
+        </CustomButton>
       </View>
 
       <View style={[styles.topSection, { height: screenHeight * 0.35 }]}>
         {/* top takes up 0.4 of the screen*/}
 
-        <Text style={styles.profileName}>{username}</Text>
-
-        <View style={styles.avatarContainer}>
-          <Image
-            source={avatarBase64 ? { uri: avatarBase64 } : defaultProfile}
-            style={styles.profileImage}
-          />
-        </View>
+        <Text style={styles.username}>{defaultUsername}</Text>
+        <Image
+          source={avatarUrl ? { uri: avatarUrl } : defaultProfile}
+          style={styles.profileImage}
+        />
         <Text style={styles.bioText}>
           {profileBio && profileBio.trim().length > 0
             ? profileBio
@@ -135,27 +87,25 @@ const ProfileScreen = ({ navigation }) => {
         </Text>
       </View>
       <View style={[styles.bottomSection]}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionHeaderText}>YOUR TWIINS</Text>
+        <View style={[styles.titleContainer]}>
+          <Text style={[styles.header]}>Previous Twiins</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView style={styles.scrollContainer}>
           {prevTwiins.map((twiin, index) => (
-            <View key={index} style={styles.twiinCard}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <View>
-                  <Text style={styles.twiinName}>{twiin.twiinName}</Text>
-                  <Text style={styles.twiinDetails}>
-                    {twiin.challengeName} | {twiin.difficulty}
+            <View key={index} style={styles.card}>
+              <View style={styles.rankRow}>
+                <View style={{ flexDirection: "column" }}>
+                  <Text style={[styles.twiin]}>{twiin.twiinName}</Text>
+
+                  <Text style={styles.rankText}>
+                    {twiin.challengeName} • {twiin.difficulty}
                   </Text>
                 </View>
-                <Text style={styles.twiinDate}>{twiin.date}</Text>
+
+                <View>
+                  <Text style={styles.date}>{twiin.date}</Text>
+                </View>
               </View>
             </View>
           ))}
@@ -168,54 +118,55 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: theme.colors.background || "#fff",
   },
   topSection: {
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 0,
   },
-  profileName: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "center",
+  username: {
+    fontSize: 22,
     marginTop: 10,
-    marginBottom: 5,
-    fontFamily: "SpaceGrotesk_700Bold",
-  },
-  avatarContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 5,
     marginBottom: 10,
+    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
   },
   profileImage: {
     width: 180,
     height: 180,
-    borderRadius: 160,
-    borderWidth: 3,
-    borderColor: "#000", // or your theme's dark color
-    backgroundColor: "#fff",
+    resizeMode: "cover",
+    borderRadius: 700,
+    marginBottom: 20,
   },
   bioText: {
     fontSize: 16,
     textAlign: "center",
     color: "#444",
     fontFamily: "SpaceGrotesk_400Regular",
-    marginBottom: 16,
   },
   bottomSection: {
     flex: 1,
     backgroundColor: "#f0f0f0",
   },
   scrollContent: {
-    padding: 0,
-    alignItems: "center",
+    padding: 20,
   },
   prevCard: {
     fontSize: 16,
     marginBottom: 15,
     color: "#333",
+  },
+  titleContainer: {
+    width: "100%", // Full width of the screen
+    alignItems: "center",
+    padding: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 5,
+    elevation: 0,
+    backgroundColor: theme.colors.blue,
+    alignItems: "center",
   },
   header: {
     fontSize: 22,
@@ -225,9 +176,8 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 10,
-    backgroundColor: "#FAFAF7",
-    alignItems: "center",
+    padding: 24,
+    backgroundColor: theme.colors.darkestBlue,
   },
   rankRow: {
     flexDirection: "row",
@@ -237,20 +187,17 @@ const styles = StyleSheet.create({
   },
   card: {
     //prevMatch card
-    width: "95%",
-    backgroundColor: "#FAFAF7",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#d6d6d6",
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    marginBottom: 10,
+    width: "100%",
+    backgroundColor: theme.colors.background,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 15,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 4, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 3, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 5,
+    elevation: 2,
   },
   date: {
     fontSize: 16,
@@ -270,64 +217,12 @@ const styles = StyleSheet.create({
   },
   editProfileContainer: {
     position: "absolute", // Allows top/right positioning
-    top: 60,
+    top: 20,
     right: 30,
     width: 50,
     height: 50,
     borderRadius: 8,
     zIndex: 999,
-  },
-  sectionHeader: {
-    borderTopWidth: 3,
-    height: 60,
-    borderBottomWidth: 4,
-    borderColor: "#000",
-    width: "100%",
-    backgroundColor: theme.colors.rematchButton,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  sectionHeaderText: {
-    color: "#000",
-    fontSize: 24,
-    fontWeight: "bold",
-    letterSpacing: 1,
-    fontFamily: "SpaceGrotesk_700Bold",
-    marginTop: 3,
-  },
-  twiinCard: {
-    width: "98%",
-    backgroundColor: "#FAFAF7",
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: "#000",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-    alignItems: "flex-start",
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  twiinName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    fontFamily: "SpaceGrotesk_700Bold",
-    marginBottom: 2,
-  },
-  twiinDetails: {
-    fontSize: 16,
-    color: "#222",
-    fontFamily: "SpaceGrotesk_400Regular",
-  },
-  twiinDate: {
-    fontSize: 18,
-    color: "#222",
-    textAlign: "right",
-    alignSelf: "flex-start",
-    fontFamily: "SpaceGrotesk_400Regular",
   },
 });
 

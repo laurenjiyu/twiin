@@ -12,8 +12,8 @@ import {
   Alert,
   Linking,
 } from "react-native";
-import Button from "../components/Button";
-import { supabase, getAvatarUrl, setAvatar } from "../db";
+import CustomButton from "../components/Button";
+import { supabase } from "../db";
 import theme from "../theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
@@ -85,34 +85,35 @@ const EditProfileScreen = () => {
       if (!user) throw new Error("User not found");
 
       let avatarUrlToUpdate = currentAvatarUrl;
-
       // Handle avatar upload if a new image is selected
       if (profileImage) {
-        // Get the file extension and MIME type
-        const extension = profileImage.uri.split(".").pop();
-        let mimeType = "image/png"; // default MIME type
-
-        if (extension === "jpg" || extension === "jpeg") {
-          mimeType = "image/jpeg";
-        } else if (extension === "png") {
-          mimeType = "image/png";
+        const response = await fetch(profileImage.uri);
+        const blob = await response.blob();
+        let filePath;
+        if (!currentAvatarUrl) {
+          filePath = `${user.id}.jpeg`;
+        } else {
+          filePath = currentAvatarUrl.split("/").pop();
         }
-
-        // Construct the file-like object
-        const avatarFile = {
-          uri: profileImage.uri,
-          type: mimeType,
-          name: `avatar.${extension}`, // Using extension for file name
-        };
-
-        const { avatarUrl, error } = await setAvatar(user.id, avatarFile);
-        if (error) throw error;
-        avatarUrlToUpdate = avatarUrl;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, blob, {
+            contentType: "image/jpeg",
+            upsert: true,
+          });
+        if (uploadError) throw uploadError;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("avatars").getPublicUrl(filePath);
+        avatarUrlToUpdate = publicUrl;
       }
 
       // Update bio and avatar_url (if changed)
       const updateObj = { profile_bio: bio };
-      if (avatarUrlToUpdate) {
+      if (!currentAvatarUrl && avatarUrlToUpdate) {
+        updateObj.avatar_url = avatarUrlToUpdate;
+      }
+      if (profileImage && currentAvatarUrl) {
         updateObj.avatar_url = avatarUrlToUpdate;
       }
       const { error: updateError } = await supabase
@@ -142,12 +143,12 @@ const EditProfileScreen = () => {
         <Text style={styles.header}>Edit Profile</Text>
       </View>
       <View style={styles.backButton}>
-        <Button
-          backgroundColor={theme.colors.uploadMedia}
+        <CustomButton
+          backgroundColor="#f78da7"
           onPress={() => navigation.goBack()}
         >
           <Icon name="arrow-back" size={24} color="black" />
-        </Button>
+        </CustomButton>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Bio Section */}
@@ -186,13 +187,13 @@ const EditProfileScreen = () => {
             )}
           </TouchableOpacity>
         </View>
-        <Button
+        <CustomButton
           onPress={handleSave}
-          backgroundColor={theme.colors.submitButton}
+          backgroundColor={theme.colors.darkOrange}
           disabled={uploading}
         >
           {uploading ? "Saving..." : "Save Changes"}
-        </Button>
+        </CustomButton>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.rematchButton,
+    backgroundColor: theme.colors.blue,
   },
   header: {
     fontSize: 28,
