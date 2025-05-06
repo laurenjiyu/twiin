@@ -192,9 +192,9 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 180,
     height: 180,
-    borderRadius: 180,
+    borderRadius: 160,
     borderWidth: 3,
-    borderColor: theme.colors.background, // or your theme's dark color
+    borderColor: "#000", // or your theme's dark color
     backgroundColor: "#fff",
   },
   bioText: {
@@ -216,18 +216,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
     color: "#333",
-  },
-  titleContainer: {
-    width: "95%", // Full width of the screen
-    alignItems: "center",
-    padding: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 5,
-    elevation: 0,
-    backgroundColor: theme.colors.uploadMedia,
-    alignItems: "center",
   },
   header: {
     fontSize: 22,
@@ -301,11 +289,11 @@ const styles = StyleSheet.create({
   },
   sectionHeaderText: {
     color: "#000",
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     letterSpacing: 1,
     fontFamily: "SpaceGrotesk_700Bold",
-    marginTop: 5,
+    marginTop: 3,
   },
   twiinCard: {
     width: "98%",

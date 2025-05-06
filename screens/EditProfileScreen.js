@@ -32,7 +32,6 @@ const EditProfileScreen = () => {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        console.log("EditProfileScreen: user.id =", user.id); // <-- Add this line
         const { data: profile } = await supabase
           .from("users")
           .select("profile_bio, avatar_url")
@@ -143,7 +142,10 @@ const EditProfileScreen = () => {
         <Text style={styles.header}>Edit Profile</Text>
       </View>
       <View style={styles.backButton}>
-        <Button backgroundColor="#f78da7" onPress={() => navigation.goBack()}>
+        <Button
+          backgroundColor={theme.colors.uploadMedia}
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="arrow-back" size={24} color="black" />
         </Button>
       </View>
@@ -211,7 +213,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.yourMatchCard,
+    backgroundColor: theme.colors.rematchButton,
   },
   header: {
     fontSize: 28,
