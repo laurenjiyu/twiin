@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     borderTopWidth: 3,
     height: 60,
-    borderBottomWidth: 3,
+    borderBottomWidth: 4,
     borderColor: "#000",
     width: "100%",
     backgroundColor: theme.colors.rematchButton,
