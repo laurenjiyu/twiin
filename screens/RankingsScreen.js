@@ -145,9 +145,6 @@ const RankingsScreen = () => {
             </View>
           );
         })}
-        <View style={{ paddingVertical: 20 }}>
-          <Text style={styles.username}>more twiins on the way...</Text>
-        </View>
       </ScrollView>
     </View>
   );
@@ -202,13 +199,12 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 15,
     alignItems: "center",
-
     // Bright shadow/glow
-    // shadowColor: "#ffe066", // bright yellow
-    // shadowOffset: { width: 0, height: -1 },
-    // shadowOpacity: 1,
-    // shadowRadius: 12,
-    // elevation: 1,
+    shadowColor: "#ffe066", // bright yellow
+    shadowOffset: { width: 0, height: -1 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 1,
   },
   rankRow: {
     flexDirection: "row",

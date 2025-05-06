@@ -32,6 +32,7 @@ const EditProfileScreen = () => {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
+        console.log("EditProfileScreen: user.id =", user.id); // <-- Add this line
         const { data: profile } = await supabase
           .from("users")
           .select("profile_bio, avatar_url")
@@ -214,7 +215,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.blue,
+    backgroundColor: theme.colors.rematchButton,
   },
   header: {
     fontSize: 28,
