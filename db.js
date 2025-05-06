@@ -1,8 +1,5 @@
 // db.js
 import { createClient } from "@supabase/supabase-js";
-import { FileObject } from "@supabase/storage-js";
-import * as FileSystem from "expo-file-system";
-import { decode as atob } from "base-64";
 
 // 1) Initialize Supabase client
 const SUPABASE_URL = "https://owfwygmjaxixnoxofgtj.supabase.co";
@@ -41,9 +38,6 @@ export async function createUser(userData, avatarFile = null) {
       if (urlError) console.warn("Getting public URL failed:", urlError);
       else avatar_url = publicURL;
     }
-
-    console.log("Blob info:", blob);
-    console.log("Blob size:", blob.size, "type:", blob.type);
   }
 
   // 2b) Insert into your users table
@@ -55,7 +49,7 @@ export async function createUser(userData, avatarFile = null) {
   return { user: data, error };
 }
 
-// 3) Update an existing user's profile (name, avatar, etc.)
+// 3) Update an existing user’s profile (name, avatar, etc.)
 export async function updateUser(id, updates, avatarFile = null) {
   let avatar_url = updates.avatar_url || null;
 
@@ -63,15 +57,7 @@ export async function updateUser(id, updates, avatarFile = null) {
   if (avatarFile) {
     const response = await fetch(avatarFile.uri);
     const blob = await response.blob();
-    let fileName = avatarFile.name || avatarFile.fileName;
-    if (!fileName && avatarFile.uri) {
-      // Try to extract from URI
-      fileName = avatarFile.uri.split("/").pop();
-    }
-    if (!fileName) {
-      fileName = "avatar.jpg"; // fallback
-    }
-    const fileExt = fileName.split(".").pop();
+    const fileExt = avatarFile.name.split(".").pop();
     const filePath = `avatars/${id}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
@@ -86,9 +72,6 @@ export async function updateUser(id, updates, avatarFile = null) {
         .getPublicUrl(filePath);
       avatar_url = publicURL;
     }
-
-    console.log("Blob info:", blob);
-    console.log("Blob size:", blob.size, "type:", blob.type);
   }
 
   // 3b) Update the row
@@ -101,7 +84,7 @@ export async function updateUser(id, updates, avatarFile = null) {
   return { user: data, error };
 }
 
-// 4) Fetch a user's profile by their ID
+// 4) Fetch a user’s profile by their ID
 export async function getUserProfile(id) {
   const { data, error } = await supabase
     .from("users")
@@ -167,90 +150,4 @@ export async function getChallenges() {
     .select("id, start_time, end_time")
     .order("id", { ascending: true });
   return { data, error };
-}
-
-//get Avatar url from the users id
-export const getAvatarUrl = (userId, ext = "jpg") => {
-  const filePath = `avatars/${userId}.${ext}`;
-  const { publicURL } = supabase.storage.from("avatars").getPublicUrl(filePath);
-  return { avatarUrl: publicURL || null, error: null };
-};
-
-/**
- * Set (upload and update) the avatar for a user using base64 and FileSystem
- * Only supports images (png, jpg, jpeg, etc.)
- * @param {string} userId
- * @param {object} avatarFile - { uri, type, fileName/name }
- * @returns {object} { avatarUrl, error }
- */
-export async function setAvatar(userId, avatarFile) {
-  // Ensure the file is an image
-  if (!avatarFile.type || !avatarFile.type.startsWith("image")) {
-    return {
-      avatarUrl: null,
-      error: new Error("Only image files are supported for avatars."),
-    };
-  }
-
-  // Read file as base64
-  const base64 = await FileSystem.readAsStringAsync(avatarFile.uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-
-  // Determine file extension and content type
-  let fileName = avatarFile.name || avatarFile.fileName;
-  //const ext = fileName.split("/").pop(); // e.g., "image/jpeg" -> "jpeg"
-  const ext = "jpg";
-  const contentType = avatarFile.type; // e.g., "image/jpeg"
-
-  // Ensure content type is valid
-  if (!contentType.startsWith("image/")) {
-    return {
-      avatarUrl: null,
-      error: new Error("Invalid image type."),
-    };
-  }
-
-  // Use filePath format with the userId and extension
-  const filePath = `avatars/${userId}.${ext}`;
-
-  // Decode base64 to binary
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(filePath, bytes, { contentType, upsert: true });
-
-  if (uploadError) {
-    console.log("Upload error:", uploadError);
-    return { avatarUrl: null, error: uploadError };
-  }
-
-  // Get public URL for the uploaded avatar
-  const { publicURL, error: urlError } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(filePath);
-
-  if (urlError || !publicURL) {
-    console.log("URL error:", urlError);
-    return { avatarUrl: null, error: urlError };
-  }
-
-  // Update user row in the database with the new avatar URL
-  const { error: updateError } = await supabase
-    .from("users")
-    .update({ avatar_url: publicURL })
-    .eq("id", userId);
-
-  if (updateError) {
-    console.log("Update error:", updateError);
-    return { avatarUrl: null, error: updateError };
-  }
-
-  return { avatarUrl: publicURL, error: null };
 }

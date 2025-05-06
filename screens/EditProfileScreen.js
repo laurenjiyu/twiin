@@ -32,7 +32,6 @@ const EditProfileScreen = () => {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        console.log("EditProfileScreen: user.id =", user.id); // <-- Add this line
         const { data: profile } = await supabase
           .from("users")
           .select("profile_bio, avatar_url")
@@ -86,34 +85,35 @@ const EditProfileScreen = () => {
       if (!user) throw new Error("User not found");
 
       let avatarUrlToUpdate = currentAvatarUrl;
-
       // Handle avatar upload if a new image is selected
       if (profileImage) {
-        // Get the file extension and MIME type
-        const extension = profileImage.uri.split(".").pop();
-        let mimeType = "image/png"; // default MIME type
-
-        if (extension === "jpg" || extension === "jpeg") {
-          mimeType = "image/jpeg";
-        } else if (extension === "png") {
-          mimeType = "image/png";
+        const response = await fetch(profileImage.uri);
+        const blob = await response.blob();
+        let filePath;
+        if (!currentAvatarUrl) {
+          filePath = `${user.id}.jpeg`;
+        } else {
+          filePath = currentAvatarUrl.split("/").pop();
         }
-
-        // Construct the file-like object
-        const avatarFile = {
-          uri: profileImage.uri,
-          type: mimeType,
-          name: `avatar.${extension}`, // Using extension for file name
-        };
-
-        const { avatarUrl, error } = await setAvatar(user.id, avatarFile);
-        if (error) throw error;
-        avatarUrlToUpdate = avatarUrl;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, blob, {
+            contentType: "image/jpeg",
+            upsert: true,
+          });
+        if (uploadError) throw uploadError;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("avatars").getPublicUrl(filePath);
+        avatarUrlToUpdate = publicUrl;
       }
 
       // Update bio and avatar_url (if changed)
       const updateObj = { profile_bio: bio };
-      if (avatarUrlToUpdate) {
+      if (!currentAvatarUrl && avatarUrlToUpdate) {
+        updateObj.avatar_url = avatarUrlToUpdate;
+      }
+      if (profileImage && currentAvatarUrl) {
         updateObj.avatar_url = avatarUrlToUpdate;
       }
       const { error: updateError } = await supabase
