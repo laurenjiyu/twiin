@@ -1,6 +1,6 @@
 const theme = {
     colors: {
-      background: '#C0F5E4',            // Main background color
+      background: '#F9F8F5',            // Main background color
       yourMatchCard: '#81A3FF',         // "YOUR MATCH" card color
       challengeCard: '#FDB4BD',         // Challenge card color
       uploadMedia: '#F2C69B',           // Upload media card color
