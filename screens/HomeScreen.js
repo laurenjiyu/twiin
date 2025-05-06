@@ -11,16 +11,28 @@ import {
 import theme from "../theme";
 import { supabase, getChallenges, getUserMatch } from "../db";
 import defaultProfile from "../assets/default_profile.jpg";
+import CustomButton from "../components/Button";
+import { useNavigation } from "@react-navigation/native";
+import ChallengeSubmissionView from "../components/ChallengeSubmissionView";
 // Array of difficulty levels
 const difficulties = ["Easy", "Medium", "Hard"];
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
   const [challenges, setChallenges] = useState([]);
   const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
   const [challengeIdx, setChallengeIdx] = useState(0); // New state for challenge index
   const [match, setMatch] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showSubmissionScreen, setSubmissionPage] = useState(false);
+
+  const selectChallenge = (index) => {
+    setCurrentDifficultyIdx(index);
+    navigation.replace("ChallengeSubmission", {
+      challenge: challenges[index],
+    });
+  }
 
   // 1) Load challenges on mount
   useEffect(() => {
@@ -93,14 +105,14 @@ const HomeScreen = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.leaderboard} />
+        <ActivityIndicator size="large" color={theme.colors.darkestBlue} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Countdown Timer */}
+      {/* Timer always at top */}
       <View style={styles.timerContainer}>
         {timeLeft.expired ? (
           <Text style={styles.timerText}>Expired</Text>
@@ -111,79 +123,104 @@ const HomeScreen = () => {
           </Text>
         )}
       </View>
-
-      {/* YOUR MATCH Card */}
-      <View style={styles.matchCard}>
-        <Text style={styles.cardHeader}>YOUR MATCH</Text>
-        {match ? (
-          <View style={styles.matchContainer}>
-            <Image
-              source={
-                match.avatar_url ? { uri: match.avatar_url } : defaultProfile
-              }
-              style={styles.avatar}
-            />
-            <Text style={styles.matchName}>{match.name}</Text>
+  
+      {showSubmissionScreen ? (
+        <ChallengeSubmissionView
+          submissionPage={showSubmissionScreen} // Pass the state to the component
+          setSubmissionPage={setSubmissionPage} // Pass callback to update state
+          chosenChallenge={challenges[currentDifficultyIdx].name}
+        />
+      ) : (
+        <>
+          {/* MATCH */}
+          <View style={styles.matchCard}>
+            <Text style={styles.cardHeader}>YOUR MATCH</Text>
+            {match ? (
+              <View style={styles.matchContainer}>
+                <Image
+                  source={
+                    match.avatar_url
+                      ? { uri: match.avatar_url }
+                      : defaultProfile
+                  }
+                  style={styles.avatar}
+                />
+                <Text style={styles.matchName}>{match.name}</Text>
+              </View>
+            ) : (
+              <Text style={styles.noMatchText}>No match found</Text>
+            )}
           </View>
-        ) : (
-          <Text style={styles.noMatchText}>No match found</Text>
-        )}
-      </View>
-
-      <View style={styles.spacer} />
-
-      {/* PICK A CHALLENGE */}
-      <Text style={styles.sectionHeader}>PICK A CHALLENGE</Text>
-      <View style={styles.challengeCard}>
-        <TouchableOpacity
-          onPress={() => setcurrentDifficultyIdx((i) => Math.max(i - 1, 0))}
-          disabled={currentDifficultyIdx === 0}
-        >
-          <Text
-            style={[
-              styles.arrow,
-              currentDifficultyIdx === 0 && styles.disabledArrow,
-            ]}
+  
+          <View style={styles.spacer} />
+  
+          {/* CHALLENGE SELECTOR */}
+          <Text style={styles.sectionHeader}>PICK A CHALLENGE</Text>
+          <View style={styles.challengeCard}>
+            <TouchableOpacity
+              onPress={() =>
+                setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
+              }
+              disabled={currentDifficultyIdx === 0}
+            >
+              <Text
+                style={[
+                  styles.arrow,
+                  currentDifficultyIdx === 0 && styles.disabledArrow,
+                ]}
+              >
+                ‹
+              </Text>
+            </TouchableOpacity>
+  
+            <View style={styles.challengeContent}>
+              <Text style={styles.difficultyText}>
+                {difficulties[currentDifficultyIdx]}
+              </Text>
+              <Text style={styles.taskText}>TASK</Text>
+              <Button
+                title="Select"
+                onPress={() =>
+                  console.log("Selected", difficulties[currentDifficultyIdx])
+                }
+                color={theme.colors.darkOrange}
+              />
+            </View>
+  
+            <TouchableOpacity
+              onPress={() =>
+                setCurrentDifficultyIdx((i) =>
+                  Math.min(i + 1, difficulties.length - 1)
+                )
+              }
+              disabled={currentDifficultyIdx === difficulties.length - 1}
+            >
+              <Text
+                style={[
+                  styles.arrow,
+                  currentDifficultyIdx === difficulties.length - 1 &&
+                    styles.disabledArrow,
+                ]}
+              >
+                ›
+              </Text>
+            </TouchableOpacity>
+          </View>
+  
+          <CustomButton
+            style={styles.proceedButton}
+            onPress={() => setSubmissionPage(true)}
+            color={theme.colors.darkOrange}
+            backgroundColor={theme.colors.darkOrange}
+            fontSize={18}
           >
-            ‹
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.challengeContent}>
-          <Text style={styles.difficultyText}>
-            {difficulties[currentDifficultyIdx]}
-          </Text>
-          <Text style={styles.taskText}>TASK</Text>
-          <Button
-            title="Select"
-            onPress={() =>
-              console.log("Selected", difficulties[currentDifficultyIdx])
-            }
-            color={theme.colors.submitButton}
-          />
-        </View>
-
-        <TouchableOpacity
-          onPress={() =>
-            setcurrentDifficultyIdx((i) =>
-              Math.min(i + 1, difficulties.length - 1)
-            )
-          }
-          disabled={currentDifficultyIdx === difficulties.length - 1}
-        >
-          <Text
-            style={[
-              styles.arrow,
-              currentDifficultyIdx === difficulties.length - 1 &&
-                styles.disabledArrow,
-            ]}
-          >
-            ›
-          </Text>
-        </TouchableOpacity>
-      </View>
+            Proceed
+          </CustomButton>
+        </>
+      )}
     </View>
   );
+  
 };
 
 const styles = StyleSheet.create({
@@ -216,7 +253,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   matchCard: {
-    backgroundColor: theme.colors.yourMatchCard,
+    backgroundColor: theme.colors.blue,
     borderRadius: 10,
     borderColor: "gray",
     borderWidth: 2,
@@ -267,12 +304,13 @@ const styles = StyleSheet.create({
   challengeCard: {
     width: "100%",
     flexGrow: 1,
-    backgroundColor: theme.colors.challengeCard,
+    backgroundColor: theme.colors.pink,
     borderRadius: 10,
     borderColor: "gray",
     borderWidth: 2,
     padding: 20,
-    marginBottom: 100,
+    maxHeight: "40%",
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 5, height: 10 },
     shadowOpacity: 0.05,
@@ -302,6 +340,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text,
   },
+  proceedButton: {
+    marginBottom: 10
+  }
 });
 
 export default HomeScreen;

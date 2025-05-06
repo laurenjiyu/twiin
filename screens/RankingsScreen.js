@@ -153,7 +153,7 @@ const RankingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.leaderboard,
+    backgroundColor: theme.colors.darkestBlue,
   },
   titleContainer: {
     width: "100%", // Full width of the screen
@@ -164,13 +164,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 2,
-    backgroundColor: theme.colors.yourMatchCard,
+    backgroundColor: theme.colors.blue,
     alignItems: "center",
   },
   scrollContainer: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: theme.colors.leaderboard,
+    backgroundColor: theme.colors.darkestBlue,
   },
   header: {
     fontSize: 28,

@@ -12,7 +12,7 @@ import {
 import theme from "../theme";
 import { supabase } from "../db";
 import defaultProfile from "../assets/icons/anonymous.png"; //in square format rn
-import Button from "../components/Button";
+import CustomButton from "../components/Button";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
 //Data of previous matches (sample data)
@@ -64,12 +64,12 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.editProfileContainer}>
-        <Button
+        <CustomButton
           backgroundColor="#f78da7"
           onPress={() => navigation.navigate("EditProfile")}
         >
           <Icon name="menu" size={24} color="black" />
-        </Button>
+        </CustomButton>
       </View>
 
       <View style={[styles.topSection, { height: screenHeight * 0.35 }]}>
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.yourMatchCard,
+    backgroundColor: theme.colors.blue,
     alignItems: "center",
   },
   header: {
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: theme.colors.leaderboard,
+    backgroundColor: theme.colors.darkestBlue,
   },
   rankRow: {
     flexDirection: "row",

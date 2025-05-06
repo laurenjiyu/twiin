@@ -97,7 +97,7 @@ export default function SignupScreen({ navigation }) {
 
         <Button
           onPress={handleSignup}
-          backgroundColor={theme.colors.createAccountButton}
+          backgroundColor={theme.colors.darkOrange}
           fontSize={18}
           disabled={isFormInvalid}
         >
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
   input: {
-    backgroundColor: theme.colors.challengeCard,
+    backgroundColor: theme.colors.pink,
     padding: 10,
     marginBottom: 10,
     borderWidth: 2,

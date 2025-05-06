@@ -12,7 +12,7 @@ import {
   Alert,
   Linking,
 } from "react-native";
-import Button from "../components/Button";
+import CustomButton from "../components/Button";
 import { supabase } from "../db";
 import theme from "../theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -143,9 +143,9 @@ const EditProfileScreen = () => {
         <Text style={styles.header}>Edit Profile</Text>
       </View>
       <View style={styles.backButton}>
-        <Button backgroundColor="#f78da7" onPress={() => navigation.goBack()}>
+        <CustomButton backgroundColor="#f78da7" onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="black" />
-        </Button>
+        </CustomButton>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Bio Section */}
@@ -184,13 +184,13 @@ const EditProfileScreen = () => {
             )}
           </TouchableOpacity>
         </View>
-        <Button
+        <CustomButton
           onPress={handleSave}
-          backgroundColor={theme.colors.submitButton}
+          backgroundColor={theme.colors.darkOrange}
           disabled={uploading}
         >
           {uploading ? "Saving..." : "Save Changes"}
-        </Button>
+        </CustomButton>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.yourMatchCard,
+    backgroundColor: theme.colors.blue,
   },
   header: {
     fontSize: 28,
