@@ -102,6 +102,23 @@ export async function listUsers(filter = '') {
   return { users: data, error };
 }
 
+export const getChallengeList = async () => {
+  const { data, error } = await supabase
+    .from('challenge_list')
+    .select('id, short_desc, full_desc, difficulty')
+    .order('created_at', { ascending: false });
+  return { data, error };
+};
+
+export const getChallengePeriod = async () => {
+  const { data, error } = await supabase
+    .from('challenges')
+    .select('*')
+    .order('start_time', { ascending: false })
+    .limit(1);
+  return { data, error };
+};
+
 
 /**
  * Fetch the current user's match for a given challenge
@@ -114,19 +131,20 @@ export async function getUserMatch(userId, challengeId) {
       .eq('challenge_id', challengeId)
       .or(`user_a.eq.${userId},user_b.eq.${userId}`)
       .single();
+      console.log("Match Record:", matchRec);
     if (matchErr || !matchRec) return { match: null, error: matchErr };
-  
-    // 2) determine the opponent's ID
-    const opponentId = matchRec.user_a === userId ? matchRec.user_b : matchRec.user_a;
-  
-    // 3) fetch opponent's profile
-    const { data: opponent, error: userErr } = await supabase
+    // console.log("Match Record:", matchRec);
+    // 2) determine the partner's ID
+    const partnerId = matchRec.user_a === userId ? matchRec.user_b : matchRec.user_a;
+    console.log("Partner ID:", partnerId);
+    // 3) fetch partner's profile
+    const { data: partner, error: userErr } = await supabase
       .from('users')
       .select('id, name, avatar_url')
-      .eq('id', opponentId)
+      .eq('id', partnerId)
       .single();
   
-    return { match: opponent, error: userErr };
+    return { match: partner, error: userErr };
   }
   
   /**

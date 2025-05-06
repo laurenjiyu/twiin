@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import RootNavigator from './navigation/RootNavigator';
 
@@ -21,9 +21,11 @@ const App = () => {
   if (!fontsLoaded) return null;
 
   return (
-    <NavigationContainer>
-      <RootNavigator/>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <RootNavigator/>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 };
 

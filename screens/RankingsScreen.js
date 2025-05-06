@@ -5,9 +5,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
-  Button,
-  ActivityIndicator,
 } from "react-native";
 import theme from "../theme";
 import GoldTrophy from "../assets/icons/GoldTrophy.png";
