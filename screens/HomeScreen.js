@@ -195,12 +195,11 @@ const HomeScreen = () => {
                   </View>
 
                   <View style={styles.challengeSectionBottom}>
-                    <TouchableOpacity
-                      style={[styles.selectButton, { backgroundColor: buttonColors[currentDifficulty] }]}
-                      onPress={() => setSubmissionPage(true)}
-                    >
-                      <Text style={styles.selectText}>SELECT</Text>
-                    </TouchableOpacity>
+                    <CustomButton
+                      backgroundColor={theme.colors.darkBlue}
+                      onPress={() => {
+                        setSubmissionPage(true);}}>SELECT
+                    </CustomButton>
                   </View>
                 </View>
 
@@ -369,14 +368,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   challengeSectionMiddle: {
-    flex: 3,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 100,
   },
   challengeSectionBottom: {
-    flex: 1,
-    alignItems: "flex-end",
+    marginTop: 10,
+    alignItems: "center",
     justifyContent: "flex-end",
   },
   difficultyLabel: {
