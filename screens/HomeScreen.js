@@ -8,7 +8,7 @@ import {
   Button,
 } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Clipboard from '@react-native-clipboard/clipboard';
+import * as Clipboard from 'expo-clipboard';
 import theme from "../theme";
 import {
   supabase,
@@ -41,11 +41,11 @@ const HomeScreen = () => {
   const difficulties = ["EASY", "MEDIUM", "HARD"];
   const copyEmailToClipboard = async () => {
     if (match?.email) {
-      await Clipboard.setString(match.email);
+      await Clipboard.setStringAsync(match.email);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
     }
-  };
+  };  
   // const [currentUserId, setCurrentUserId] = useState(null);
   //fetch user info
   useEffect(() => {
