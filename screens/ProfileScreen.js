@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     padding: 0,
@@ -230,16 +230,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.blue,
     alignItems: "center",
   },
-  header: {
-    fontSize: 26,
-    marginTop: 4,
-    marginBottom: 4,
-    fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
-  },
   scrollContainer: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: theme.colors.darkestBlue,
+    backgroundColor: theme.colors.background,
   },
   rankRow: {
     flexDirection: "row",
@@ -301,11 +295,11 @@ const styles = StyleSheet.create({
   },
   sectionHeaderText: {
     color: "#000",
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     letterSpacing: 1,
     fontFamily: "SpaceGrotesk_700Bold",
-    marginTop: 5,
+    marginTop: 2,
   },
   twiinCard: {
     width: "98%",

@@ -143,7 +143,10 @@ const EditProfileScreen = () => {
         <Text style={styles.header}>Edit Profile</Text>
       </View>
       <View style={styles.backButton}>
-        <CustomButton backgroundColor="#f78da7" onPress={() => navigation.goBack()}>
+        <CustomButton
+          backgroundColor={theme.colors.blue}
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="arrow-back" size={24} color="black" />
         </CustomButton>
       </View>
@@ -184,13 +187,13 @@ const EditProfileScreen = () => {
             )}
           </TouchableOpacity>
         </View>
-        <Button
+        <CustomButton
           onPress={handleSave}
           backgroundColor={theme.colors.darkOrange}
           disabled={uploading}
         >
           {uploading ? "Saving..." : "Save Changes"}
-        </Button>
+        </CustomButton>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.blue,
+    backgroundColor: theme.colors.darkBlue,
   },
   header: {
     fontSize: 28,
@@ -235,18 +238,24 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   promptText: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontFamily: "SpaceGrotesk_700Bold",
   },
   responseCard: {
     backgroundColor: "#fff",
     padding: 12,
     borderRadius: 12,
     marginBottom: 20,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
   },
   input: {
     fontSize: 16,
     minHeight: 40,
+    fontFamily: "SpaceGrotesk_400Regular",
   },
   imageUploadButton: {
     width: "100%",
@@ -275,6 +284,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: "#666",
+    fontFamily: "SpaceGrotesk_400Regular",
   },
   backButton: {
     position: "absolute",

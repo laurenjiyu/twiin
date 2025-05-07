@@ -154,7 +154,6 @@ const RankingsScreen = () => {
         <View style={{ paddingVertical: 13 }}>
           <Text style={styles.username}>more twiins on the way...</Text>
         </View>
-        ;
       </ScrollView>
     </SafeAreaView>
   );
@@ -167,7 +166,7 @@ const styles = StyleSheet.create({
   },
   blueHeader: {
     width: "100%",
-    backgroundColor: theme.colors.leaderboard, // strong blue
+    backgroundColor: theme.colors.darkestBlue, // strong blue
     paddingVertical: 16,
     alignItems: "center",
     marginBottom: 5,
