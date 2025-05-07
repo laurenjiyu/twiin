@@ -153,6 +153,10 @@ const RankingsScreen = () => {
             </View>
           );
         })}
+        <View style={{ paddingVertical: 13 }}>
+          <Text style={styles.username}>more twiins on the way...</Text>
+        </View>
+        ;
       </ScrollView>
     </View>
   );
@@ -201,7 +205,7 @@ const styles = StyleSheet.create({
   },
   userCard: {
     width: "95%",
-    backgroundColor: "#FAFAF7",
+    backgroundColor: theme.colors.yourMatchCard,
     borderRadius: 12,
     borderColor: "#000",
     borderWidth: 1.25,
@@ -209,11 +213,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     marginBottom: 10,
     alignItems: "center",
-    // Bright shadow/glow
-    shadowColor: "#ffe066", // bright yellow
-    shadowOffset: { width: 0, height: -1 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
+    shadowOffset: { width: 4, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
     elevation: 1,
   },
   rankRow: {
