@@ -127,6 +127,7 @@ export const getChallengeList = async () => {
     .from('challenge_list')
     .select('id, short_desc, full_desc, difficulty')
     .order('created_at', { ascending: false });
+  print("Challenge List:", data);
   return { data, error };
 };
 

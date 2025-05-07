@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   },
   pointsLabel: {
     fontSize: 14,
-    color: "#333",
+    color: "black",
   },
   challengeText: {
     fontSize: 18,
