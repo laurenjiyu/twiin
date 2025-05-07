@@ -193,8 +193,8 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 180,
-    borderWidth: 3,
-    borderColor: theme.colors.background, // or your theme's dark color
+    borderWidth: 2,
+    borderColor: theme.colors.yourMatchCard,
     backgroundColor: "#fff",
   },
   bioText: {
@@ -230,15 +230,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   header: {
-    fontSize: 22,
-    marginTop: 6,
-    marginBottom: 6,
+    fontSize: 26,
+    marginTop: 4,
+    marginBottom: 4,
     fontFamily: "SpaceGrotesk_700Bold", // Apply the loaded font
   },
   scrollContainer: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: theme.colors.leaderboard,
+    //backgroundColor: theme.colors.leaderboard,
   },
   rankRow: {
     flexDirection: "row",
