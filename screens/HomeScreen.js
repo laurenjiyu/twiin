@@ -13,8 +13,9 @@ import * as Clipboard from "expo-clipboard";
 import theme from "../theme";
 import {
   supabase,
-  getChallenges,
-  getUserMatch,
+  getChallengeList,
+  getChallengePeriod,
+  getUserMatch
 } from "../db";
 import defaultProfile from "../assets/default_profile.jpg";
 import CustomButton from "../components/CustomButton";
@@ -22,23 +23,25 @@ import ChallengeSubmissionView from "../components/ChallengeSubmissionView";
 import { useNavigation } from "@react-navigation/native";
 import TopBar from "../components/TopBar";
 
-const difficulties = ["Easy", "Medium", "Hard"];
+const difficulties = ["EASY", "MEDIUM", "HARD"];
 
 const difficultyColors = {
-  Easy: "#DFFFEF",    // Light green background
-  Medium: "#FFF3E0",  // Light orange background
-  Hard: "#FFEBEE"     // Light red background
+  EASY: "#DFFFEF",    // Light green background
+  MEDIUM: "#FFF3E0",  // Light orange background
+  HARD: "#FFEBEE"     // Light red background
 };
 
 const buttonColors = {
-  Easy: "#DFFF90",
-  Medium: "#FFBD59",
-  Hard: "#FF7676"
+  EASY: "#DFFF90",
+  MEDIUM: "#FFBD59",
+  HARD: "#FF7676"
 };
 
 const HomeScreen = () => {
+  const [challengePeriod, setChallengePeriod] = useState(null);
   const navigation = useNavigation();
   const [challenges, setChallenges] = useState([]);
+  const [challengesByDifficulty, setChallengesByDifficulty] = useState({});
   const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
   const [challengeIdx, setChallengeIdx] = useState(0);
   const [match, setMatch] = useState(null);
@@ -54,78 +57,61 @@ const HomeScreen = () => {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
     }
-  };
-
+  };  
+  // const [currentUserId, setCurrentUserId] = useState(null);
+  //fetch user info
   useEffect(() => {
-    const fetchProfile = async () => {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-      if (sessionError || !session || !session.user) {
-        console.error("User not authenticated");
-        return;
+    const loadData = async () => {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError || !sessionData.session) {
+        console.error("Error fetching session:", sessionError);
+        return; //if user not logged in
       }
 
-      const user = session.user;
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("total_points")
-        .eq("id", user.id)
-        .single();
+      const currentUser = sessionData.session.user;
 
-      if (userError) {
-        console.error("Error fetching user data:", userError);
+      const { data: listData } = await getChallengeList();
+      const grouped = {
+        EASY: [],
+        MEDIUM: [],
+        HARD: []
+      };
+      // console.log("List Data:", listData);
+      listData.forEach(challenge => {
+        grouped[challenge.difficulty]?.push(challenge);
+      });
+      console.log("Grouped Challenges:", grouped);
+      const randomChallenges = {};
+      for (const diff of difficulties) {
+        const group = grouped[diff];
+        randomChallenges[diff] = group.length > 0 ? group[Math.floor(Math.random() * group.length)] : null;
       }
+      // console.log("Random Challenges:", randomChallenges);
+      setChallengesByDifficulty(randomChallenges);
 
-      setUserPoints(userData?.total_points ?? 0);
-    };
-    fetchProfile();
-  }, []);
+      const { data: periodData } = await getChallengePeriod();
+      if (periodData?.[0]) {
+        setChallengePeriod(periodData[0]);
+        // console.log("Challenge Period:", periodData[0]);
 
-  useEffect(() => {
-    const loadChallenges = async () => {
-      try {
-        setLoading(true);
-        const { data: chData, error: chErr } = await getChallenges();
-        if (chErr || !chData) {
-          console.error("Error fetching challenges", chErr || "No data returned");
-          setChallenges([]);
-        } else {
-          setChallenges(chData);
+        // const { data: userData } = await getUserProfile(user.id);
+        console.log("Current User ID:", currentUser.id);
+        const { match: matchData } = await getUserMatch(currentUser.id, periodData[0].id);
+        if (matchData) {
+          setMatch(matchData);
+          console.log("Match Data:", matchData);
         }
-      } catch (err) {
-        console.error("Unexpected error fetching challenges", err);
-        setChallenges([]);
-      } finally {
-        setLoading(false);
       }
     };
-    loadChallenges();
+    loadData();
   }, []);
 
   useEffect(() => {
-    const loadMatch = async () => {
-      if (!challenges.length) return;
-      setLoading(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    if (!challengePeriod) return;
 
-      const { match: mData, error: mErr } = await getUserMatch(
-        user.id,
-        challenges[currentDifficultyIdx].id
-      );
-      if (mErr) console.error("Error fetching match", mErr);
-      else setMatch(mData);
-      setLoading(false);
-    };
-    loadMatch();
-  }, [challenges, currentDifficultyIdx]);
-
-  useEffect(() => {
-    if (!challenges.length) return;
-    const endTime = new Date(challenges[challengeIdx].end_time);
+    const endTime = new Date(challengePeriod.end_time);
     const updateTimer = () => {
       const now = new Date();
       const distance = endTime - now;
@@ -133,27 +119,19 @@ const HomeScreen = () => {
         setTimeLeft({ expired: true });
         return;
       }
-      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      setTimeLeft({ days, hours, minutes, seconds, expired: false });
+      setTimeLeft({ minutes, seconds, expired: false });
     };
+
     updateTimer();
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [challenges, challengeIdx]);
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.darkestBlue} />
-      </View>
-    );
-  }
+  }, [challengePeriod]);
 
   const currentDifficulty = difficulties[currentDifficultyIdx];
-  const currentChallenge = challenges[currentDifficultyIdx];
+  const currentChallenge = challengesByDifficulty[currentDifficulty];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -188,9 +166,9 @@ const HomeScreen = () => {
               ) : (
                 <Text style={styles.noMatchText}>No match found</Text>
               )}
-              <TouchableOpacity style={styles.rematchButton}>
-                <Text style={styles.rematchText}>REMATCH</Text>
-              </TouchableOpacity>
+              <CustomButton backgroundColor={theme.colors.darkBlue} style={styles.rematchButton}>
+                REMATCH
+              </CustomButton>
             </View>
 
             <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
@@ -386,13 +364,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   challengeSectionTop: {
-    flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
   },
   challengeSectionMiddle: {
-    //flex: 3,
+    flex: 3,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 100,
@@ -405,6 +382,7 @@ const styles = StyleSheet.create({
   difficultyLabel: {
     fontSize: 20,
     fontWeight: "bold",
+    color: "black",
     marginBottom: 2,
   },
   difficultyText: {
@@ -417,10 +395,15 @@ const styles = StyleSheet.create({
     color: "black",
   },
   challengeText: {
-    fontSize: 18,
+    fontSize: 25,
     textAlign: "center",
     textAlignVertical: "center",
-    marginBottom: 10,
+    flex: 1,
+    
+    justifyContent: "center",
+    alignItems: "center",
+    fontFamily: theme.text.heading,
+    color: "black",
   },
   taskText: {
     fontSize: 18,
