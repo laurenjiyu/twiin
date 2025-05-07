@@ -6,8 +6,9 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  Image,
 } from "react-native";
-import Button from "../components/Button";
+import CustomButton from "../components/CustomButton";
 import { StatusBar } from "expo-status-bar";
 import theme from "../theme";
 import { supabase as db, createUser } from "../db";
@@ -93,9 +94,9 @@ export default function LoginScreen({ navigation }) {
       <StatusBar style="light" />
       {!showForm ? (
         <View style={styles.centeredContent}>
+          <Image source={require('../assets/icons/twiin_logo.png')} style={styles.logo}/>
           <Text style={styles.splashText}>Twiin</Text>
-
-          <Button
+          <CustomButton
             onPress={() => {
               setCreatingAccount(false); // important: this ensures login mode
               setShowForm(true);
@@ -104,7 +105,7 @@ export default function LoginScreen({ navigation }) {
             fontSize={18}
           >
             SIGN IN WITH EMAIL
-          </Button>
+          </CustomButton>
 
           <View style={styles.dividingLine}>
             <View style={styles.line} />
@@ -112,16 +113,17 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.line} />
           </View>
 
-          <Button
+          <CustomButton
             onPress={() => navigation.navigate("Signup")}
-            backgroundColor={theme.colors.createAccountButton}
+            backgroundColor={theme.colors.darkOrange}
             fontSize={18}
           >
             CREATE ACCOUNT
-          </Button>
+          </CustomButton>
         </View>
       ) : (
         <View style={styles.centeredContent}>
+          <Image source={require('../assets/icons/twiin_logo.png')} style={styles.logo}/>
           <Text style={styles.splashText}>Twiin</Text>
 
           <TextInput
@@ -142,13 +144,13 @@ export default function LoginScreen({ navigation }) {
             style={styles.input}
           />
 
-          <Button
+          <CustomButton
             onPress={creatingAccount ? signUpWithEmail : signInWithEmail}
-            backgroundColor={theme.colors.createAccountButton}
+            backgroundColor={theme.colors.darkOrange}
             fontSize={18}
           >
             {creatingAccount ? "CREATE ACCOUNT" : "SIGN IN WITH EMAIL"}
-          </Button>
+          </CustomButton>
 
           <TouchableOpacity
             style={{ marginTop: 12 }}
@@ -178,11 +180,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
   },
+  logo: {
+    height: '20%',
+    resizeMode: 'contain',
+  },
   splashText: {
     fontWeight: "bold",
     fontFamily: theme.text.title_bold,
-    fontSize: 70,
-    marginBottom: 40,
+    fontSize: 60,
+    marginBottom: 50,
     textAlign: "center",
   },
   dividingLine: {
@@ -197,7 +203,7 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
   },
   input: {
-    backgroundColor: theme.colors.challengeCard,
+    backgroundColor: theme.colors.pink,
     padding: 10,
     marginBottom: 10,
     borderWidth: 2,
@@ -206,7 +212,7 @@ const styles = StyleSheet.create({
     width: 250,
   },
   primaryButton: {
-    backgroundColor: theme.colors.challengeCard,
+    backgroundColor: theme.colors.pink,
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 10,

@@ -2,7 +2,7 @@ import React from "react";
 import { TouchableOpacity, Text, StyleSheet, Platform } from "react-native";
 import theme from "../theme";
 
-export default function Button({
+export default function CustomButton({
   onPress,
   backgroundColor = "#000",
   fontSize = 16,
@@ -29,8 +29,8 @@ export default function Button({
 
 const styles = StyleSheet.create({
   button: {
-    padding: 8,
-    paddingHorizontal: 20,
+    padding: 6,
+    paddingHorizontal: 8,
     borderRadius: 10,
     alignItems: "center",
     marginVertical: 5,
