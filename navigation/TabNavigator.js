@@ -9,11 +9,24 @@ const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
   return (
-    <Tab.Navigator tabBar={(props) => <FloatingNavBar {...props} />}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Rankings" component={RankingsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
+<Tab.Navigator tabBar={(props) => <FloatingNavBar {...props} />}>
+  <Tab.Screen
+    name="Home"
+    component={HomeScreen}
+    options={{ headerShown: false, tabBarLabel: () => null }}
+  />
+  <Tab.Screen
+    name="Rankings"
+    component={RankingsScreen}
+    options={{ headerShown: false, tabBarLabel: () => null }}
+  />
+  <Tab.Screen
+    name="Profile"
+    component={ProfileScreen}
+    options={{ headerShown: false, tabBarLabel: () => null }}
+  />
+</Tab.Navigator>
+
   );
 };
 

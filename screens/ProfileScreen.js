@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   ScrollView,
+  SafeAreaView,
   Text,
   StyleSheet,
   Image,
@@ -105,7 +106,7 @@ const ProfileScreen = ({ navigation }) => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <TopBar groupName="CS278" points={userPoints} />
 
       <View style={styles.editProfileContainer}>
@@ -161,7 +162,7 @@ const ProfileScreen = ({ navigation }) => {
           ))}
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
   },
   editProfileContainer: {
     position: "absolute", // Allows top/right positioning
-    top: 60,
+    top: 120,
     right: 30,
     width: 50,
     height: 50,

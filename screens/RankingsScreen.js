@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
+  SafeAreaView,
   ScrollView,
   Text,
   StyleSheet,
@@ -123,7 +124,7 @@ const RankingsScreen = () => {
   }, []);
 
   return (
-    <View style={[styles.container]}>
+    <SafeAreaView style={[styles.container]}>
       <TopBar groupName="CS278" points={currentPoints} />
 
       <View style={styles.blueHeader}>
@@ -155,7 +156,7 @@ const RankingsScreen = () => {
         </View>
         ;
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
