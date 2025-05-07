@@ -26,15 +26,15 @@ import TopBar from "../components/TopBar";
 const difficulties = ["EASY", "MEDIUM", "HARD"];
 
 const difficultyColors = {
-  EASY: "#DFFFEF",    // Light green background
-  MEDIUM: "#FFF3E0",  // Light orange background
-  HARD: "#FFEBEE"     // Light red background
+  EASY: "#C0F5E4",    // Light green background
+  MEDIUM: "#FFBF91",  // Light orange background
+  HARD: "#FDB4BD"     // Light red background
 };
 
 const buttonColors = {
-  EASY: "#DFFF90",
-  MEDIUM: "#FFBD59",
-  HARD: "#FF7676"
+  EASY: "#D3FF8C",
+  MEDIUM: "#FF9650",
+  HARD: "#FF8A8A"
 };
 
 const HomeScreen = () => {
@@ -82,7 +82,6 @@ const HomeScreen = () => {
       listData.forEach(challenge => {
         grouped[challenge.difficulty]?.push(challenge);
       });
-      console.log("Grouped Challenges:", grouped);
       const randomChallenges = {};
       for (const diff of difficulties) {
         const group = grouped[diff];
@@ -97,11 +96,9 @@ const HomeScreen = () => {
         // console.log("Challenge Period:", periodData[0]);
 
         // const { data: userData } = await getUserProfile(user.id);
-        console.log("Current User ID:", currentUser.id);
         const { match: matchData } = await getUserMatch(currentUser.id, periodData[0].id);
         if (matchData) {
           setMatch(matchData);
-          console.log("Match Data:", matchData);
         }
       }
     };
@@ -151,7 +148,7 @@ const HomeScreen = () => {
         ) : (
           <>
             <View style={styles.matchCard}>
-              <Text style={styles.matchHeader}>YOUR MATCH</Text>
+              <Text style={styles.cardLabel}>YOUR TWIIN</Text>
               {match ? (
                 <View style={styles.matchRow}>
                   <Image
@@ -184,7 +181,7 @@ const HomeScreen = () => {
 
                 <View style={styles.challengeContent}>
                   <View style={styles.challengeSectionTop}>
-                    <Text style={styles.difficultyLabel}>{currentDifficulty.toUpperCase()}</Text>
+                    <Text style={styles.cardLabel}>{currentDifficulty.toUpperCase()}</Text>
                     <Text style={styles.pointsLabel}>+100</Text>
                   </View>
 
@@ -196,7 +193,7 @@ const HomeScreen = () => {
 
                   <View style={styles.challengeSectionBottom}>
                     <CustomButton
-                      backgroundColor={theme.colors.darkBlue}
+                      backgroundColor={buttonColors[currentDifficulty]}
                       onPress={() => {
                         setSubmissionPage(true);}}>SELECT
                     </CustomButton>
@@ -236,42 +233,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   body: {
-    flex: 1,
+    margin: 20,
   },
   timer: {
     fontSize: 28,
+    fontFamily: theme.text.title_bold,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 20,
+    margin: 20,
   },
   timerContainer: {
     alignItems: "center",
     marginBottom: 15,
   },
-  timerText: {
-    fontSize: 28,
-    fontWeight: "bold",
-  },
   matchCard: {
-    backgroundColor: "#AECBFA",
+    backgroundColor: theme.colors.blue,
     paddingHorizontal: 30,
     paddingVertical: 25,
-    borderRadius: 10,
+    borderRadius: 15,
     alignItems: "center",
     marginBottom: 20,
     height: 200,
     borderWidth: 1.5,
     borderColor: "#000",
-    shadowColor: "#000",
-    shadowOffset: { width: 5, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  matchHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
   },
   matchRow: {
     flexDirection: "row",
@@ -332,21 +316,18 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   challengeTitle: {
+    fontFamily: theme.text.heading,
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
   },
   challengeCard: {
-    borderRadius: 10,
+    borderRadius: 15,
     paddingVertical: 25,
     paddingHorizontal: 30,
     borderWidth: 1.5,
     borderColor: "#000",
-    shadowColor: "#000",
-    shadowOffset: { width: 5, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
     elevation: 5,
     marginBottom: 40,
     backgroundColor: "#fff", 
@@ -370,15 +351,25 @@ const styles = StyleSheet.create({
   challengeSectionMiddle: {
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 100,
+    paddingHorizontal: 10,
+    maxHeight: 150, // Optional: keep the content from growing too tall
+  },
+  challengeText: {
+    fontSize: 20,
+    textAlign: "center",
+    color: "black",
+    fontFamily: theme.text.body,
+    flexWrap: "wrap",
+    lineHeight: 24,
   },
   challengeSectionBottom: {
     marginTop: 10,
     alignItems: "center",
     justifyContent: "flex-end",
   },
-  difficultyLabel: {
-    fontSize: 20,
+  cardLabel: {
+    fontSize: 30,
+    fontFamily: theme.text.heading,
     fontWeight: "bold",
     color: "black",
     marginBottom: 2,
@@ -392,36 +383,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "black",
   },
-  challengeText: {
-    fontSize: 25,
-    textAlign: "center",
-    textAlignVertical: "center",
-    flex: 1,
-    
-    justifyContent: "center",
-    alignItems: "center",
-    fontFamily: theme.text.heading,
-    color: "black",
-  },
   taskText: {
     fontSize: 18,
     textAlign: "center",
     marginVertical: 15,
-  },
-  selectButton: {
-    backgroundColor: "#DDD",
-    borderRadius: 5,
-    width: 100,
-    height: 36,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 1, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-    borderWidth: 1.5,
-    borderColor: "#000",
   },
   selectText: {
     fontWeight: "bold",
@@ -430,7 +395,7 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 32,
     color: "#000",
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
   },
   disabledArrow: {
     color: "#ccc",

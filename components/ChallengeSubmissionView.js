@@ -7,29 +7,9 @@ import theme from "../theme";
 import { useNavigation } from "@react-navigation/native";
 
 const ChallengeSubmissionView = ({ submissionPage, setSubmissionPage, chosenChallenge }) => {
-  const navigation = useNavigation();
-  const [timeLeft, setTimeLeft] = useState({ minutes: 47, seconds: 59 });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        const totalSec = prev.minutes * 60 + prev.seconds - 1;
-        return {
-          minutes: Math.max(0, Math.floor(totalSec / 60)),
-          seconds: Math.max(0, totalSec % 60),
-        };
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.timerText}>
-        ⏳ {String(timeLeft.minutes).padStart(2, "0")}:
-        {String(timeLeft.seconds).padStart(2, "0")}
-      </Text>
-
       <View style={styles.challengeCard}>
         <Text style={styles.title}>TWIINS</Text>
         <Text style={styles.names}>LAUREN & KELSEA</Text>
@@ -39,7 +19,7 @@ const ChallengeSubmissionView = ({ submissionPage, setSubmissionPage, chosenChal
         </Text>
         <CustomButton
           style={styles.changeButton}
-          backgroundColor={theme.colors.darkBlue}
+          backgroundColor={theme.colors.red}
           onPress={() => setSubmissionPage(false)}
         >
           <Text style={styles.changeButtonText}>CHANGE</Text>

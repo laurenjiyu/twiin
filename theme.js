@@ -8,7 +8,10 @@ const theme = {
       darkOrange: '#FFA448',          // Submit button color
       red: '#FF8A8A', // Your match submit button color
       text: '#000000',                  // Default text color
-      darkestBlue: '#243DB9'            // Leaderboard color
+      darkestBlue: '#243DB9',            // Leaderboard color
+      green: '#D3FF8C',
+      mint: '#C0F5E4',
+
     },
     text: {
       body: 'SpaceGrotesk_400Regular',
