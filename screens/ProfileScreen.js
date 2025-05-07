@@ -13,7 +13,7 @@ import {
 import theme from "../theme";
 import { supabase, getAvatarUrl } from "../db";
 import defaultProfile from "../assets/icons/anonymous.png"; //in square format rn
-import Button from "../components/Button";
+import CustomButton from "../components/CustomButton";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import TopBar from "../components/TopBar";
 
@@ -109,12 +109,12 @@ const ProfileScreen = ({ navigation }) => {
       <TopBar groupName="CS278" points={userPoints} />
 
       <View style={styles.editProfileContainer}>
-        <Button
-          backgroundColor={theme.colors.rematchButton}
+        <CustomButton
+          backgroundColor={theme.colors.darkBlue}
           onPress={() => navigation.navigate("EditProfile")}
         >
           <Icon name="settings" size={26} color="black" />
-        </Button>
+        </CustomButton>
       </View>
 
       <View style={[styles.topSection, { height: screenHeight * 0.35 }]}>
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 5,
     elevation: 0,
-    backgroundColor: theme.colors.yourMatchCard,
+    backgroundColor: theme.colors.blue,
     alignItems: "center",
   },
   header: {
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: theme.colors.leaderboard,
+    backgroundColor: theme.colors.darkestBlue,
   },
   rankRow: {
     flexDirection: "row",
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 4,
     borderColor: "#000",
     width: "100%",
-    backgroundColor: theme.colors.rematchButton,
+    backgroundColor: theme.colors.darkBlue,
     paddingVertical: 10,
     alignItems: "center",
   },

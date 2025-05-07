@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import Button from "../components/Button";
+import CustomButton from "../components/CustomButton";
 import { StatusBar } from "expo-status-bar";
 import theme from "../theme";
 import { supabase as db, createUser } from "../db";
@@ -95,14 +95,14 @@ export default function SignupScreen({ navigation }) {
           style={styles.input}
         />
 
-        <Button
+        <CustomButton
           onPress={handleSignup}
-          backgroundColor={theme.colors.createAccountButton}
+          backgroundColor={theme.colors.darkOrange}
           fontSize={18}
           disabled={isFormInvalid}
         >
           CREATE ACCOUNT
-        </Button>
+        </CustomButton>
 
         <TouchableOpacity
           style={{ marginTop: 12 }}
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
   input: {
-    backgroundColor: theme.colors.challengeCard,
+    backgroundColor: theme.colors.pink,
     padding: 10,
     marginBottom: 10,
     borderWidth: 2,
