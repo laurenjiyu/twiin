@@ -14,7 +14,7 @@ import theme from "../theme";
 import {
   supabase,
   getChallengeList,
-  getChallengePeriod,
+  getChallengeRound,
   getUserMatch,
   getUserProfile,
   uploadVote,
@@ -41,15 +41,18 @@ const buttonColors = {
 };
 
 const HomeScreen = () => {
-  const [challengePeriod, setChallengePeriod] = useState(null);
-    
+  const [challengeRound, setChallengeRound] = useState(null);
+  const [selectedChallengeId, setSelectedChallengeId] = useState(null);
   const [currentUserData, setCurrentUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [challenges, setChallenges] = useState([]);
   const [challengesByDifficulty, setChallengesByDifficulty] = useState({});
   const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
   const [challengeIdx, setChallengeIdx] = useState(0);
+
   const [match, setMatch] = useState(null);
+  const [matchSelectedChallengeId, setMatchSelectedChallengeId] = useState(null);
+  
   const [timeLeft, setTimeLeft] = useState({});
   const [loading, setLoading] = useState(true);
   const [showSubmissionScreen, setSubmissionPage] = useState(false);
@@ -68,71 +71,93 @@ const HomeScreen = () => {
   //fetch user info
   useEffect(() => {
     const loadData = async () => {
-
       // Set up session
       const { data: sessionData, error: sessionError } =
         await supabase.auth.getSession();
 
       if (sessionError || !sessionData.session) {
         console.error("Error fetching session:", sessionError);
-        return; 
+        return;
+      } else {
+        console.log("retrieved session data")
       }
 
       // Get current user data
       const currentUser = sessionData.session.user;
       setCurrentUserId(currentUser.id);
 
-      const { user: currUserData, error: userError } = await getUserProfile(currentUser.id);
+      const { user: currUserData, error: userError } = await getUserProfile(
+        currentUser.id
+      );
       console.log("Current user data:", currUserData);
       if (currUserData) {
         setCurrentUser(currUserData);
         setUserPoints(currUserData.total_points);
+        setSelectedChallengeId(currUserData.selected_challenge_id);
       }
       if (userError) {
         console.error("Error fetching user data:", userError);
       }
 
-      // Get the list of challenges
-      const { data: listData } = await getChallengeList();
-      const grouped = {
-        EASY: [],
-        MEDIUM: [],
-        HARD: [],
-      };
+      const { data: periodData, error: periodError } =
+        await getChallengeRound();
 
-      listData.forEach((challenge) => {
-        grouped[challenge.difficulty]?.push(challenge);
-      });
-      const randomChallenges = {};
-      for (const diff of difficulties) {
-        const group = grouped[diff];
-        randomChallenges[diff] =
-          group.length > 0
-            ? group[Math.floor(Math.random() * group.length)]
-            : null;
-      }
-      setChallengesByDifficulty(randomChallenges);
-
-      const { data: periodData } = await getChallengePeriod();
-      if (periodData?.[0]) {
-        setChallengePeriod(periodData[0]);
+      let round = null;
+      if (periodError) {
+        console.error("Error fetching challenge period:", periodError);
+      } else {
+        round = periodData[0];
+        setChallengeRound(round);
+        console.log("Challenge round data:", round);
         const { match: matchData } = await getUserMatch(
           currentUser.id,
-          periodData[0].id
+          round.id
         );
+
         if (matchData) {
           setMatch(matchData);
+          setMatchSelectedChallengeId(matchData.challenge_id);
+          console.log("right before the challenges, round id: ", round.id)
+          // Get the list of challenges
+          const { data: listData, error: listError } = await getChallengeList(
+            round.id
+          );
+
+          if (listError) {
+            console.error("Error fetching challenge list:", listError);
+          } else {
+            const grouped = {
+              EASY: {},
+              MEDIUM: {},
+              HARD: {},
+            };
+            console.log("got list of challenges", listData);
+    
+    
+            // Create dictionary of dictionaries with the challenge data per difficulty level
+            listData.forEach((challenge) => {
+              const diff = challenge.difficulty;
+              if (grouped.hasOwnProperty(diff)) {
+                grouped[diff] = {
+                  full_desc: challenge.full_desc,
+                  id: challenge.id,
+                  short_desc: challenge.short_desc,
+                  point_value: challenge.point_value,
+                };
+              }
+            });
+            setChallengesByDifficulty(grouped);
+          }
         }
       }
     };
     loadData();
   }, []);
 
-
   useEffect(() => {
-    if (!challengePeriod) return;
+    if (!challengeRound) return;
 
-    const endTime = new Date(challengePeriod.end_time);
+    const endTime = new Date(challengeRound.end_time);
     const updateTimer = () => {
       const now = new Date();
       const distance = endTime - now;
@@ -149,18 +174,7 @@ const HomeScreen = () => {
     updateTimer();
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [challengePeriod]);
-
-  
-  const voteForChallenge = async (idx) => {
-    const { challengeId, error: challengeError } = await uploadVote(idx, currentUserId);
-    if (challengeError) {
-      console.error("Error voting for challenge:", challengeError);
-    } else {      
-      // Select challenge if it's not selected
-      selectChallenge(challengeId);
-    }
-  }
+  }, [challengeRound]);
 
   const currentDifficulty = difficulties[currentDifficultyIdx];
   const currentChallenge = challengesByDifficulty[currentDifficulty];
@@ -173,9 +187,11 @@ const HomeScreen = () => {
         ⏳
         {timeLeft.expired
           ? "00:00"
-          : `${String(timeLeft.days)}d ${String(timeLeft.hours)}h ${String(
-              timeLeft.minutes
-            )}m ${String(timeLeft.seconds)}s`}
+          : `${timeLeft.days ? `${timeLeft.days}` : "0"}d ${
+              timeLeft.hours ? `${timeLeft.hours}` : "0"
+            }h ${timeLeft.minutes ? `${timeLeft.minutes}` : "0"}m ${
+              timeLeft.seconds ? `${timeLeft.seconds}` : "0"
+            }s`.trim()}
       </Text>
 
       <View style={styles.body}>
@@ -215,90 +231,99 @@ const HomeScreen = () => {
               <CustomButton
                 backgroundColor={theme.colors.darkBlue}
                 style={styles.rematchButton}
+                disabled={true}
               >
                 REMATCH
               </CustomButton>
             </View>
 
             <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
+            {/*difficulty, challenge, voteButtonDisabled,*/}
+            <ChallengeCard
+              difficulty={currentDifficulty}
+              challengeInfo={currentChallenge}
+              currSelectedId={selectedChallengeId}
+              voteForChallenge={setSelectedChallengeId}
+            />
 
-            <View
-              style={[
-                styles.challengeCard,
-                { backgroundColor: difficultyColors[currentDifficulty] },
-              ]}
-            >
-              <View style={styles.challengeRow}>
-                <TouchableOpacity
-                  onPress={() =>
-                    setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
-                  }
-                  disabled={currentDifficultyIdx === 0}
+            {/* <View
+                  style={[
+                    styles.challengeCard,
+                    { backgroundColor: difficultyColors[currentDifficulty] },
+                  ]}
                 >
-                  <Text
-                    style={[
-                      styles.arrow,
-                      currentDifficultyIdx === 0 && styles.disabledArrow,
-                    ]}
-                  >
-                    {"<"}
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={styles.challengeContent}>
-                  <View style={styles.challengeSectionTop}>
-                    <Text style={styles.cardLabel}>
-                      {currentDifficulty.toUpperCase()}
-                    </Text>
-                    <Text style={styles.pointsLabel}>+100</Text>
-                  </View>
-
-                  <View style={styles.challengeSectionMiddle}>
-                    <Text style={styles.challengeText}>
-                      {currentChallenge
-                        ? currentChallenge.full_desc
-                        : "No challenge"}
-                    </Text>
-                  </View>
-
-                  <View style={styles.challengeSectionBottom}>
-                    <CustomButton
-                      backgroundColor={buttonColors[currentDifficulty]}
-                      onPress={() => {
-                        voteForChallenge(currentDifficultyIdx);
-                      }}
+                  <View style={styles.challengeRow}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
+                      }
+                      disabled={currentDifficultyIdx === 0}
                     >
-                      VOTE FOR CHALLENGE
-                    </CustomButton>
+                      <Text
+                        style={[
+                          styles.arrow,
+                          currentDifficultyIdx === 0 && styles.disabledArrow,
+                        ]}
+                      >
+                        {"<"}
+                      </Text>
+                    </TouchableOpacity>
+    
+                    <View style={styles.challengeContent}>
+                      <View style={styles.challengeSectionTop}>
+                        <Text style={styles.cardLabel}>
+                          {currentDifficulty.toUpperCase()}
+                        </Text>
+                        <Text style={styles.pointsLabel}>+100</Text>
+                      </View>
+    
+                      <View style={styles.challengeSectionMiddle}>
+                        <Text style={styles.challengeText}>
+                          {currentChallenge
+                            ? currentChallenge.full_desc
+                            : "No challenge"}
+                        </Text>
+                      </View>
+    
+                      <View style={styles.challengeSectionBottom}>
+                        <CustomButton
+                          backgroundColor={buttonColors[currentDifficulty]}
+                          onPress={() => {
+                            voteForChallenge(currentDifficultyIdx);
+                          }}
+                        >
+                          VOTE FOR CHALLENGE
+                        </CustomButton>
+                      </View>
+                    </View>
+    
+                    <TouchableOpacity
+                      onPress={() =>
+                        setCurrentDifficultyIdx((i) =>
+                          Math.min(i + 1, difficulties.length - 1)
+                        )
+                      }
+                      disabled={currentDifficultyIdx === difficulties.length - 1}
+                    >
+                      <Text
+                        style={[
+                          styles.arrow,
+                          currentDifficultyIdx === difficulties.length - 1 &&
+                            styles.disabledArrow,
+                        ]}
+                      >
+                        {">"}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                </View>
-
-                <TouchableOpacity
-                  onPress={() =>
-                    setCurrentDifficultyIdx((i) =>
-                      Math.min(i + 1, difficulties.length - 1)
-                    )
-                  }
-                  disabled={currentDifficultyIdx === difficulties.length - 1}
-                >
-                  <Text
-                    style={[
-                      styles.arrow,
-                      currentDifficultyIdx === difficulties.length - 1 &&
-                        styles.disabledArrow,
-                    ]}
-                  >
-                    {">"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+                </View> */}
             <CustomButton
               backgroundColor={buttonColors[currentDifficulty]}
               onPress={() => {
                 setSubmissionPage(true);
               }}
               style={styles.proceedButton}
+              disabled={!(selectedChallengeId !== matchSelectedChallengeId)}
             >
               PROCEED TO CHALLENGE
             </CustomButton>
@@ -335,6 +360,11 @@ const styles = StyleSheet.create({
   timerContainer: {
     alignItems: "center",
     marginBottom: 15,
+  },
+  loadingText: {
+    fontSize: 30,
+    fontFamily: theme.text.heading,
+    textAlign: "center",
   },
   matchCard: {
     backgroundColor: theme.colors.blue,
@@ -512,8 +542,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   proceedButton: {
-    maxWidth: "30%"
-  }
+    maxWidth: "30%",
+  },
 });
 
 export default HomeScreen;

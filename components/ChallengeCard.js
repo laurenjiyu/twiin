@@ -1,94 +1,136 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { uploadVote } from '../db';  // Example path, update to actual location
-import CustomButton from './CustomButton';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import CustomButton from "./CustomButton";
+import theme from "../theme";
+import { uploadVote } from "../db";
 
 const difficultyColors = {
-    EASY: "#C0F5E4", // Light green background
-    MEDIUM: "#FFBF91", // Light orange background
-    HARD: "#FDB4BD", // Light red background
-  };
-  
-  const buttonColors = {
-    EASY: "#D3FF8C",
-    MEDIUM: "#FF9650",
-    HARD: "#FF8A8A",
-  };
-  
+  EASY: "#C0F5E4", // Light green background
+  MEDIUM: "#FFBF91", // Light orange background
+  HARD: "#FDB4BD", // Light red background
+};
 
-const ChallengeCard = ({ difficulty, challengeIndex, onVote, voteButtonColor, voteButtonDisabled }) => {
-  const [selected, setSelected] = useState(false);
+const buttonColors = {
+  EASY: "#D3FF8C",
+  MEDIUM: "#FF9650",
+  HARD: "#FF8A8A",
+};
 
-  const handleVote = async () => {
+const ChallengeCard = ({
+  difficulty,
+  challengeInfo,
+  currSelectedId,
+  voteForChallenge,
+}) => {
+
+    const handleVote = async () => {
+  if (challengeInfo && challengeInfo.id && currentUserId) {
     try {
-      // Invoke the uploadVote function with the provided difficulty and challenge
-      await uploadVote(difficulty, challenge);
-      // Mark this challenge as selected (voted)
-      setSelected(true);
-      // Trigger the onVote callback to inform parent component (if provided)
-      if (onVote) {
-        onVote(difficulty, challenge);
+      const { voteIndex, error } = await uploadVote(challengeInfo.id, currentUserId);
+      if (error) {
+        console.error("Error voting for challenge:", error);
+      } else {
+        console.log("Voted for challenge ID:", voteIndex);
+        voteForChallenge(voteIndex); // Update parent state if needed
       }
-    } catch (error) {
-      console.error('Error voting on challenge:', error);
-      // Handle errors (you might show an alert or toast in a real app)
+    } catch (err) {
+      console.error("Unexpected error during vote:", err);
     }
-  };
+  }
+};
+
+
+  const isSelected = currSelectedId === (challengeInfo?.id || null);
 
   return (
-    <View style={[styles.card, backgroundColor=buttonColors[difficulty]]}>
-      {/* Challenge title or name */}
-      <Text style={styles.challengeTitle}>{challenge.title}</Text>
+    <View
+      style={[
+        styles.challengeCard,
+        { backgroundColor: difficultyColors[difficulty] },
+      ]}
+    >
+      <View style={styles.challengeContent}>
+        <View style={styles.challengeSectionTop}>
+          <Text style={styles.cardLabel}>{difficulty}</Text>
+          <Text style={styles.pointsLabel}>
+            +{challengeInfo?.point_value || 100}
+          </Text>
+        </View>
 
-      {/* Vote button */}
-      <CustomButton
-        style={[
-          styles.voteButton,
-          // If a custom vote button color is provided via props, apply it
-          voteButtonColor ? { backgroundColor: voteButtonColor } : null
-        ]}
-        onPress={handleVote}
-        backgroundColor={difficultyColors[difficulty]} 
-        disabled={selected || voteButtonDisabled}
-      >
-        VOTE FOR CHALLENGE
-      </CustomButton>
+        <View style={styles.challengeSectionMiddle}>
+          <Text style={styles.challengeText}>
+            {challengeInfo ? challengeInfo.full_desc : "No challenge"}
+          </Text>
+        </View>
+
+        <View style={styles.challengeSectionBottom}>
+          <CustomButton
+            backgroundColor={isSelected ? buttonColors[difficulty] : "red"}
+            onPress={handleVote}
+            disabled={isSelected}
+          >
+            {isSelected ? "CHALLENGE SELECTED" : "VOTE FOR CHALLENGE"}
+          </CustomButton>
+        </View>
+      </View>
     </View>
   );
 };
 
-// Styles for the challenge card and its elements
 const styles = StyleSheet.create({
-  card: {
-    padding: 16,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 8,
-    // Elevation for Android, shadow for iOS
-    elevation: 2,
-    shadowColor: '#000',
+  challengeCard: {
+    borderRadius: 15,
+    paddingVertical: 25,
+    paddingHorizontal: 20,
+    borderWidth: 1.5,
+    borderColor: "#000",
+    elevation: 5,
+    marginBottom: 20,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 4, height: 6 },
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4
+    shadowRadius: 2,
+    elevation: 1,
   },
-  challengeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333'
+  challengeContent: {
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
   },
-  voteButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 4,
-    backgroundColor: '#2196F3' // default color (can be overridden via props)
+  challengeSectionTop: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
   },
-  voteButtonText: {
-    color: '#fff',
+  challengeSectionMiddle: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    maxHeight: 150, // Optional: keep the content from growing too tall
+  },
+  challengeText: {
+    fontSize: 20,
+    textAlign: "center",
+    color: "black",
+    fontFamily: theme.text.body,
+    flexWrap: "wrap",
+    lineHeight: 24,
+  },
+  challengeSectionBottom: {
+    marginTop: 10,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  cardLabel: {
+    fontSize: 30,
+    fontFamily: theme.text.heading,
+    fontWeight: "bold",
+    color: "black",
+  },
+  pointsLabel: {
     fontSize: 14,
-    fontWeight: '500'
-  }
+    color: "black",
+  },
 });
 
 export default ChallengeCard;

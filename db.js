@@ -161,25 +161,33 @@ export async function uploadVote(challengeId, userId) {
 
   console.log("Updated user selected challenge:", challengeId);
 
-  return { challengeId, error: null };
+  return { voteIndex: challengeId, error: null };
 }
 
-
-export const getChallengeList = async () => {
+/* Gets list of challenges for a given round
+ */
+export const getChallengeList = async (roundNumber) => {
+  console.log("bruh")
   const { data, error } = await supabase
     .from('challenge_list')
-    .select('id, short_desc, full_desc, difficulty')
-    .order('created_at', { ascending: false });
-  print("Challenge List:", data);
+    .select('id, short_desc, full_desc, difficulty, point_value')
+    .eq('challenge_round',roundNumber)
+  console.log("Challenge List:", data);
   return { data, error };
 };
 
-export const getChallengePeriod = async () => {
+/* Returns id # of the current challenge period based on current time
+ */
+export const getChallengeRound = async () => {
+  const now = new Date().toISOString(); 
+  console.log("Current time:", now);
+
   const { data, error } = await supabase
-    .from('challenges')
-    .select('*')
-    .order('start_time', { ascending: false })
-    .limit(1);
+    .from('challenge_rounds')
+    .select('id, start_time, end_time') 
+    .lte('start_time', now) 
+    .gte('end_time', now)  
+
   return { data, error };
 };
 
@@ -204,7 +212,7 @@ export async function getUserMatch(userId, challengeId) {
     // 3) fetch partner's profile
     const { data: partner, error: userErr } = await supabase
       .from('users')
-      .select('id, name, avatar_url')
+      .select('id, name, avatar_url, challenge_id')
       .eq('id', partnerId)
       .single();
   
@@ -226,7 +234,7 @@ export async function getUserMatch(userId, challengeId) {
 
 export async function getChallenges() {
   const { data, error } = await supabase
-    .from("challenges")
+    .from("challenge_rounds")
     .select("id, start_time, end_time")
     .order("id", { ascending: true });
   return { data, error };
