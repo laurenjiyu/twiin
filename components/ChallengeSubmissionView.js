@@ -1,22 +1,119 @@
-// components/ChallengeSubmissionView.js
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import CustomButton from "./CustomButton";
 import { Feather } from "@expo/vector-icons";
 import theme from "../theme";
-import { useNavigation } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
+import { supabase } from "../db"; // make sure this helper is defined
 
-const ChallengeSubmissionView = ({ setSubmissionPage, chosenChallenge, currUser, currMatch }) => {
+const ChallengeSubmissionView = ({
+  setSubmissionPage,
+  chosenChallenge,
+  userInfo,
+  matchInfo,
+}) => {
+  const [media, setMedia] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handlePickMedia = async () => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Denied",
+          "Please allow access to media library."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (result.canceled || !result.assets || !result.assets.length) return;
+
+      setMedia(result.assets[0]);
+    } catch (error) {
+      console.error("Error picking media:", error);
+      Alert.alert("Error", "Could not select a media file.");
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!media) {
+        Alert.alert("No media", "Please upload a media file first.");
+        return;
+      }
+
+      setUploading(true);
+
+      // Get current session and user
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      if (sessionError || !session?.user)
+        throw new Error("User not authenticated");
+      const user = session.user;
+
+      // Prepare file info
+      const fileExt = media.uri.split(".").pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `submissions/${fileName}`;
+
+      // Upload image to Supabase storage
+      const response = await fetch(media.uri);
+      const blob = await response.blob();
+      const { error: uploadError } = await supabase.storage
+        .from("submissions")
+        .upload(filePath, blob, {
+          contentType: media.mimeType || "image/jpeg",
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Insert row into 'submissions' table
+      const { error: insertError } = await supabase.from("submissions").insert({
+        challenge_id: chosenChallenge.id,
+        user_id: user.id,
+        payload: filePath,
+        submitted_at: new Date().toISOString(),
+      });
+
+      if (insertError) throw insertError;
+
+      Alert.alert("Success", "Your submission has been saved!");
+      setSubmissionPage(false); // go back to previous screen
+    } catch (err) {
+      console.error("Submission failed:", err);
+      Alert.alert("Submission Failed", err.message || "Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.challengeCard}>
         <Text style={styles.title}>TWIINS</Text>
-        <Text style={styles.names}>{} & {}</Text>
-        <Text style={styles.title}>CHALLENGE</Text>
-        <Text style={styles.challengeText}>
-          {chosenChallenge}
+        <Text style={styles.names}>
+          {userInfo.name} & {matchInfo.name}
         </Text>
+        <Text style={styles.title}>CHALLENGE</Text>
+        <Text style={styles.challengeText}>{chosenChallenge.full_desc}</Text>
         <CustomButton
           style={styles.changeButton}
           backgroundColor={theme.colors.red}
@@ -27,15 +124,27 @@ const ChallengeSubmissionView = ({ setSubmissionPage, chosenChallenge, currUser,
       </View>
 
       <View style={styles.uploadCard}>
-        <Text style={styles.uploadHeader}>1. UPLOAD MEDIA</Text>
-        <Feather name="image" size={48} color="#000" />
-        <Feather name="arrow-right-circle" size={28} color="#000" />
+        <Text style={styles.uploadHeader}>UPLOAD MEDIA HERE</Text>
+        <View style={styles.imageSection}>
+          {uploading && <ActivityIndicator size="small" color="#000" />}
+          {media && (
+            <Image source={{ uri: media.uri }} style={styles.previewImage} />
+          )}
+          <TouchableOpacity
+            style={styles.uploadMediaButton}
+            onPress={handlePickMedia}
+          >
+            <Feather name="image" size={48} color="#000" />
+            <Feather name="arrow-up-circle" size={28} color="#000" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <CustomButton
         color="#000"
         backgroundColor="#FCA968"
         style={styles.submitButton}
+        onPress={handleSave}
       >
         SUBMIT
       </CustomButton>
@@ -45,7 +154,6 @@ const ChallengeSubmissionView = ({ setSubmissionPage, chosenChallenge, currUser,
 
 const styles = StyleSheet.create({
   container: { alignItems: "center" },
-  timerText: { fontSize: 24, fontWeight: "bold", marginBottom: 16 },
   challengeCard: {
     backgroundColor: theme.colors.blue,
     borderRadius: 12,
@@ -55,9 +163,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  title: { fontSize: 30, fontWeight: "bold", marginBottom: 4 , fontFamily: theme.text.heading},
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 4,
+    fontFamily: theme.text.heading,
+  },
   names: { fontSize: 16, marginBottom: 12 },
-  challengeLabel: { fontSize: 18, fontWeight: "bold", marginBottom: 6 },
   challengeText: { fontSize: 16, textAlign: "center", marginBottom: 12 },
   changeButton: {
     backgroundColor: "#4D9EEB",
@@ -71,7 +183,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     width: "100%",
-    padding: 20,
+    padding: 30,
     alignItems: "center",
     marginBottom: 20,
   },
@@ -79,6 +191,21 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
+  },
+  uploadMediaButton: {
+    alignItems: "center",
+    padding: 10,
+  },
+  previewImage: {
+    width: 200,
+    height: 100,
+    marginTop: 10,
+    borderRadius: 8,
+  },
+  imageSection: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   submitButton: { width: "100%" },
 });

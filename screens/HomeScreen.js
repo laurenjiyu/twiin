@@ -175,9 +175,9 @@ const HomeScreen = () => {
         ) : showSubmissionScreen ? (
           <ChallengeSubmissionView
             setSubmissionPage={setSubmissionPage}
-            chosenChallenge={currentChallenge?.name || ""}
-            currUser={currentChallenge?.id || ""}
-            currTwiin={currentChallenge?.full_desc || ""}
+            chosenChallenge={currentChallenge}
+            userInfo={userInfo}
+            matchInfo={matchInfo}
           />
         ) : (
           <>

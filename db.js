@@ -202,7 +202,53 @@ export async function getUserMatch(userId, challengeId) {
       .single();
     return { match: partner, error: userErr };
   }
+
+  /* Function to upload */
+  export async function uploadSubmissionMedia(userId, challengeId, fileUri, mimeType = "image/jpeg") {
+    try {
+      if (!userId || !fileUri || !challengeId) {
+        throw new Error("Missing user ID, file URI, or challenge ID");
+      }
   
+      // Step 1: Upload file to Supabase storage
+      const fileExt = fileUri.split(".").pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const filePath = `submissions/${fileName}`;
+  
+      const file = {
+        uri: fileUri,
+        name: fileName,
+        type: mimeType,
+      };
+  
+      const { error: uploadError } = await supabase.storage
+        .from("submissions")
+        .upload(filePath, file, {
+          contentType: mimeType,
+        });
+  
+      if (uploadError) throw uploadError;
+  
+      // Step 2: Insert row into the submissions table
+      const { error: insertError, data: submission } = await supabase
+        .from("submissions")
+        .insert({
+          challenge_id: challengeId,
+          user_id: userId,
+          payload: filePath, // store the storage path (or use getPublicUrl if you prefer)
+          submitted_at: new Date().toISOString(),
+        })
+        .single();
+  
+      if (insertError) throw insertError;
+  
+      return { success: true, submission };
+    } catch (err) {
+      console.error("uploadSubmissionMedia error:", err);
+      return { error: err.message || err };
+    }
+  }
+
   /**
    * (Optional) Fetch submissions/history for a user
    */
