@@ -108,7 +108,6 @@ export async function getUserProfile(id) {
     .select("id, name, email, avatar_url, created_at, total_points") 
     .eq("id", id)
     .single();
-
   return { user: data, error };
 }
 
@@ -135,6 +134,7 @@ export async function uploadVote(challengeId, userId) {
     .single();
 
   if (userErr) return { voteIndex: null, error: userErr };
+  console.log("User Record:", userRec);
 
   const currentSelected = userRec.selected_challenge_id;
 
@@ -146,6 +146,7 @@ export async function uploadVote(challengeId, userId) {
       .eq('id', userId);
 
     if (updateErr) return { voteIndex: null, error: updateErr };
+    console.log("undone?");
     return { voteIndex: null, error: null }; // vote undone
   }
 
@@ -210,10 +211,9 @@ export async function getUserMatch(userId, challengeId) {
     // 3) fetch partner's profile
     const { data: partner, error: userErr } = await supabase
       .from('users')
-      .select('id, name, avatar_url, challenge_id')
+      .select('id, name, avatar_url, selected_challenge_id')
       .eq('id', partnerId)
       .single();
-  
     return { match: partner, error: userErr };
   }
   

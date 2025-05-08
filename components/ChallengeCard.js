@@ -17,16 +17,23 @@ const buttonColors = {
 };
 
 const ChallengeCard = ({
+  currentUserId,
   difficulty,
   challengeInfo,
   currSelectedId,
   voteForChallenge,
+  myImgUrl,
+  partnerImgUrl,
+  partnerSelectedId,
 }) => {
-
-    const handleVote = async () => {
-  if (challengeInfo && challengeInfo.id && currentUserId) {
+  const handleVote = async () => {
     try {
-      const { voteIndex, error } = await uploadVote(challengeInfo.id, currentUserId);
+      console.log("Voting for challenge ID:", challengeInfo.id);
+      console.log("Current user ID:", currentUserId);
+      const { voteIndex, error } = await uploadVote(
+        challengeInfo.id,
+        currentUserId
+      );
       if (error) {
         console.error("Error voting for challenge:", error);
       } else {
@@ -36,11 +43,9 @@ const ChallengeCard = ({
     } catch (err) {
       console.error("Unexpected error during vote:", err);
     }
-  }
-};
+  };
 
-
-  const isSelected = currSelectedId === (challengeInfo?.id || null);
+  const alreadySelected = currSelectedId === (challengeInfo?.id || null);
 
   return (
     <View
@@ -65,11 +70,15 @@ const ChallengeCard = ({
 
         <View style={styles.challengeSectionBottom}>
           <CustomButton
-            backgroundColor={isSelected ? buttonColors[difficulty] : "red"}
+            backgroundColor={
+              alreadySelected
+                ? theme.colors.lightGray
+                : buttonColors[difficulty]
+            }
             onPress={handleVote}
-            disabled={isSelected}
+            disabled={alreadySelected}
           >
-            {isSelected ? "CHALLENGE SELECTED" : "VOTE FOR CHALLENGE"}
+            {alreadySelected ? "CHALLENGE SELECTED" : "VOTE FOR CHALLENGE"}
           </CustomButton>
         </View>
       </View>

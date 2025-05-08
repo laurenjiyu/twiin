@@ -28,8 +28,6 @@ import TopBar from "../components/TopBar";
 
 const difficulties = ["EASY", "MEDIUM", "HARD"];
 
-
-
 const HomeScreen = () => {
   const [challengeRound, setChallengeRound] = useState(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState(null);
@@ -41,8 +39,9 @@ const HomeScreen = () => {
   const [challengeIdx, setChallengeIdx] = useState(0);
 
   const [match, setMatch] = useState(null);
-  const [matchSelectedChallengeId, setMatchSelectedChallengeId] = useState(null);
-  
+  const [matchSelectedChallengeId, setMatchSelectedChallengeId] =
+    useState(null);
+
   const [timeLeft, setTimeLeft] = useState({});
   const [loading, setLoading] = useState(true);
   const [showSubmissionScreen, setSubmissionPage] = useState(false);
@@ -69,79 +68,62 @@ const HomeScreen = () => {
         console.error("Error fetching session:", sessionError);
         return;
       } else {
-        console.log("retrieved session data")
+        console.log("retrieved session data");
       }
 
       // Get current user data
       const currentUser = sessionData.session.user;
-      setCurrentUserId(currentUser.id);
 
       const { user: currUserData, error: userError } = await getUserProfile(
         currentUser.id
       );
-      console.log("Current user data:", currUserData);
-      if (currUserData) {
-        setCurrentUser(currUserData);
-        setUserPoints(currUserData.total_points);
-        setSelectedChallengeId(currUserData.selected_challenge_id);
-      }
       if (userError) {
         console.error("Error fetching user data:", userError);
       }
+      if (currUserData) {
+        console.log("Current user data:", currUserData["id"]);
+        setCurrentUser(currUserData);
+        setCurrentUserId(currUserData.id);
+        setUserPoints(currUserData.total_points);
+        setSelectedChallengeId(currUserData.selected_challenge_id);
+      }
 
-      const { data: periodData, error: periodError } =
-        await getChallengeRound();
 
-      let round = null;
-      if (periodError) {
-        console.error("Error fetching challenge period:", periodError);
-      } else {
-        round = periodData[0];
-        setChallengeRound(round);
-        console.log("Challenge round data:", round);
-        const { match: matchData } = await getUserMatch(
-          currentUser.id,
-          round.id
+      const { match: matchData } = await getUserMatch(currentUser.id, 3);
+      if (matchData) {
+        setMatch(matchData);
+        setMatchSelectedChallengeId(matchData.challenge_id);
+        // Get the list of challenges
+        const { data: listData, error: listError } = await getChallengeList(
+          3
         );
 
-        console.log("Match data:", matchData);
+        if (listError) {
+          console.error("Error fetching challenge list:", listError);
+        } else {
+          const grouped = {
+            EASY: {},
+            MEDIUM: {},
+            HARD: {},
+          };
 
-        if (matchData) {
-          setMatch(matchData);
-          setMatchSelectedChallengeId(matchData.challenge_id);
-          // Get the list of challenges
-          const { data: listData, error: listError } = await getChallengeList(
-            round.id
-          );
-
-          if (listError) {
-            console.error("Error fetching challenge list:", listError);
-          } else {
-            const grouped = {
-              EASY: {},
-              MEDIUM: {},
-              HARD: {},
-            };
-            console.log("got list of challenges", listData);
-    
-    
-            // Create dictionary of dictionaries with the challenge data per difficulty level
-            listData.forEach((challenge) => {
-              const diff = challenge.difficulty;
-              if (grouped.hasOwnProperty(diff)) {
-                grouped[diff] = {
-                  full_desc: challenge.full_desc,
-                  id: challenge.id,
-                  short_desc: challenge.short_desc,
-                  point_value: challenge.point_value,
-                };
-              }
-            });
-            setChallengesByDifficulty(grouped);
-          }
+          // Create dictionary of dictionaries with the challenge data per difficulty level
+          listData.forEach((challenge) => {
+            const diff = challenge.difficulty;
+            if (grouped.hasOwnProperty(diff)) {
+              grouped[diff] = {
+                full_desc: challenge.full_desc,
+                id: challenge.id,
+                short_desc: challenge.short_desc,
+                point_value: challenge.point_value,
+              };
+            }
+          });
+          setChallengesByDifficulty(grouped);
         }
       }
     };
+
     loadData();
   }, []);
 
@@ -231,6 +213,7 @@ const HomeScreen = () => {
             <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
             {/*difficulty, challenge, voteButtonDisabled,*/}
             <ChallengeCard
+              currentUserId={currentUserId}
               difficulty={currentDifficulty}
               challengeInfo={currentChallenge}
               currSelectedId={selectedChallengeId}
