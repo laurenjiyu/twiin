@@ -4,7 +4,7 @@ const theme = {
       blue: '#81A3FF',         // "YOUR MATCH" card color
       pink: '#FDB4BD',         // Challenge card color
       darkGray: '#F2C69B',           // Upload media card color
-      lightGray: '#808080',         // Light gray color
+      lightGray: '#ced4da',         // Light gray color
       darkBlue: '#4B7BFF',         // Rematch button color
       darkOrange: '#FFA448',          // Submit button color
       red: '#FF8A8A', // Your match submit button color

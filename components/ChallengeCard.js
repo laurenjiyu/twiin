@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import CustomButton from "./CustomButton";
 import theme from "../theme";
 import { uploadVote } from "../db";
@@ -17,22 +17,20 @@ const buttonColors = {
 };
 
 const ChallengeCard = ({
-  currentUserId,
+  userInfo,
+  twiinInfo,
   difficulty,
   challengeInfo,
   currSelectedId,
   voteForChallenge,
-  myImgUrl,
-  partnerImgUrl,
-  partnerSelectedId,
 }) => {
   const handleVote = async () => {
     try {
-      console.log("Voting for challenge ID:", challengeInfo.id);
-      console.log("Current user ID:", currentUserId);
+      console.log("Voting for challenge info:", challengeInfo);
+      console.log("Current user ID:", userInfo.id);
       const { voteIndex, error } = await uploadVote(
         challengeInfo.id,
-        currentUserId
+        userInfo.id
       );
       if (error) {
         console.error("Error voting for challenge:", error);
@@ -46,6 +44,8 @@ const ChallengeCard = ({
   };
 
   const alreadySelected = currSelectedId === (challengeInfo?.id || null);
+  const partnersChoice = twiinInfo.selected_challenge_id === (challengeInfo?.id || null);
+
 
   return (
     <View
@@ -54,6 +54,32 @@ const ChallengeCard = ({
         { backgroundColor: difficultyColors[difficulty] },
       ]}
     >
+      {alreadySelected && (
+        <View style={[styles.profileImageWrapper, styles.leftSide]}>
+          <Image
+            source={
+              userInfo.avatar_url
+                ? { uri: userInfo.avatar_url }
+                : require("../assets/icons/anonymous.png")
+            } // fallback to defaultProfile
+            style={styles.profileImage}
+          />
+        </View>
+      )}
+
+      {partnersChoice && (
+        <View style={[styles.profileImageWrapper, styles.rightSide]}>
+          <Image
+            source={
+              twiinInfo.avatar_url
+                ? { uri: twiinInfo.avatar_url }
+                : require("../assets/icons/anonymous.png")
+            } // fallback to defaultProfile
+            style={styles.profileImage}
+          />
+        </View>
+      )}
+
       <View style={styles.challengeContent}>
         <View style={styles.challengeSectionTop}>
           <Text style={styles.cardLabel}>{difficulty}</Text>
@@ -89,12 +115,11 @@ const ChallengeCard = ({
 const styles = StyleSheet.create({
   challengeCard: {
     borderRadius: 15,
-    paddingVertical: 25,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     borderWidth: 1.5,
     borderColor: "#000",
     elevation: 5,
-    marginBottom: 20,
     backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: { width: 4, height: 6 },
@@ -109,12 +134,38 @@ const styles = StyleSheet.create({
   challengeSectionTop: {
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
+  },
+  profileImageWrapper: {
+    position: "absolute",
+    top: 10,
+    zIndex: 10,
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    padding: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  leftSide: {
+    left: 10,
+  },
+  rightSide: {
+    right: 10,
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#000",
   },
   challengeSectionMiddle: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: 35,
     maxHeight: 150, // Optional: keep the content from growing too tall
   },
   challengeText: {
@@ -137,7 +188,7 @@ const styles = StyleSheet.create({
     color: "black",
   },
   pointsLabel: {
-    fontSize: 14,
+    fontSize: 20,
     color: "black",
   },
 });

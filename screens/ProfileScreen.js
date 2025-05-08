@@ -84,7 +84,7 @@ const ProfileScreen = ({ navigation }) => {
 
       if (downloadError) {
         console.log("Error downloading avatar image:", downloadError);
-        console.log("Switch to defualt profile");
+        console.log("Switch to default profile");
         return;
       }
 

@@ -31,14 +31,14 @@ const difficulties = ["EASY", "MEDIUM", "HARD"];
 const HomeScreen = () => {
   const [challengeRound, setChallengeRound] = useState(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState(null);
-  const [currentUserData, setCurrentUser] = useState(null);
+  const [userInfo, setCurrentUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [challenges, setChallenges] = useState([]);
   const [challengesByDifficulty, setChallengesByDifficulty] = useState({});
   const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
   const [challengeIdx, setChallengeIdx] = useState(0);
 
-  const [match, setMatch] = useState(null);
+  const [matchInfo, setMatch] = useState(null);
   const [matchSelectedChallengeId, setMatchSelectedChallengeId] =
     useState(null);
 
@@ -50,8 +50,8 @@ const HomeScreen = () => {
   const [challengeSelected, selectChallenge] = useState(null);
 
   const copyEmailToClipboard = async () => {
-    if (match?.email) {
-      await Clipboard.setStringAsync(match.email);
+    if (matchInfo?.email) {
+      await Clipboard.setStringAsync(matchInfo.email);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
     }
@@ -60,6 +60,7 @@ const HomeScreen = () => {
   //fetch user info
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
       // Set up session
       const { data: sessionData, error: sessionError } =
         await supabase.auth.getSession();
@@ -81,22 +82,18 @@ const HomeScreen = () => {
         console.error("Error fetching user data:", userError);
       }
       if (currUserData) {
-        console.log("Current user data:", currUserData["id"]);
         setCurrentUser(currUserData);
         setCurrentUserId(currUserData.id);
         setUserPoints(currUserData.total_points);
         setSelectedChallengeId(currUserData.selected_challenge_id);
       }
 
-
       const { match: matchData } = await getUserMatch(currentUser.id, 3);
       if (matchData) {
         setMatch(matchData);
-        setMatchSelectedChallengeId(matchData.challenge_id);
+        setMatchSelectedChallengeId(matchData.selected_challenge_id);
         // Get the list of challenges
-        const { data: listData, error: listError } = await getChallengeList(
-          3
-        );
+        const { data: listData, error: listError } = await getChallengeList(3);
 
         if (listError) {
           console.error("Error fetching challenge list:", listError);
@@ -122,6 +119,7 @@ const HomeScreen = () => {
           setChallengesByDifficulty(grouped);
         }
       }
+      setLoading(false);
     };
 
     loadData();
@@ -168,7 +166,13 @@ const HomeScreen = () => {
       </Text>
 
       <View style={styles.body}>
-        {showSubmissionScreen ? (
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#000"
+            style={{ marginTop: 50 }}
+          />
+        ) : showSubmissionScreen ? (
           <ChallengeSubmissionView
             setSubmissionPage={setSubmissionPage}
             chosenChallenge={currentChallenge?.name || ""}
@@ -179,17 +183,17 @@ const HomeScreen = () => {
           <>
             <View style={styles.matchCard}>
               <Text style={styles.cardLabel}>YOUR TWIIN</Text>
-              {match ? (
+              {matchInfo ? (
                 <View style={styles.matchRow}>
                   <Image
                     source={
-                      match.avatar_url
-                        ? { uri: match.avatar_url }
+                      matchInfo.avatar_url
+                        ? { uri: matchInfo.avatar_url }
                         : defaultProfile
                     }
                     style={styles.avatar}
                   />
-                  <Text style={styles.matchName}>{match.name}</Text>
+                  <Text style={styles.matchName}>{matchInfo.name}</Text>
                   <TouchableOpacity onPress={copyEmailToClipboard}>
                     <Icon
                       name="mail-outline"
@@ -212,95 +216,69 @@ const HomeScreen = () => {
 
             <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
             {/*difficulty, challenge, voteButtonDisabled,*/}
-            <ChallengeCard
-              currentUserId={currentUserId}
-              difficulty={currentDifficulty}
-              challengeInfo={currentChallenge}
-              currSelectedId={selectedChallengeId}
-              voteForChallenge={setSelectedChallengeId}
-            />
-
-            {/* <View
-                  style={[
-                    styles.challengeCard,
-                    { backgroundColor: difficultyColors[currentDifficulty] },
-                  ]}
+            <View style={styles.challengeCardContainer}>
+              <View style={styles.overlapArrows}>
+                <TouchableOpacity
+                  onPress={() =>
+                    setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
+                  }
+                  disabled={currentDifficultyIdx === 0}
                 >
-                  <View style={styles.challengeRow}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
-                      }
-                      disabled={currentDifficultyIdx === 0}
-                    >
-                      <Text
-                        style={[
-                          styles.arrow,
-                          currentDifficultyIdx === 0 && styles.disabledArrow,
-                        ]}
-                      >
-                        {"<"}
-                      </Text>
-                    </TouchableOpacity>
-    
-                    <View style={styles.challengeContent}>
-                      <View style={styles.challengeSectionTop}>
-                        <Text style={styles.cardLabel}>
-                          {currentDifficulty.toUpperCase()}
-                        </Text>
-                        <Text style={styles.pointsLabel}>+100</Text>
-                      </View>
-    
-                      <View style={styles.challengeSectionMiddle}>
-                        <Text style={styles.challengeText}>
-                          {currentChallenge
-                            ? currentChallenge.full_desc
-                            : "No challenge"}
-                        </Text>
-                      </View>
-    
-                      <View style={styles.challengeSectionBottom}>
-                        <CustomButton
-                          backgroundColor={buttonColors[currentDifficulty]}
-                          onPress={() => {
-                            voteForChallenge(currentDifficultyIdx);
-                          }}
-                        >
-                          VOTE FOR CHALLENGE
-                        </CustomButton>
-                      </View>
-                    </View>
-    
-                    <TouchableOpacity
-                      onPress={() =>
-                        setCurrentDifficultyIdx((i) =>
-                          Math.min(i + 1, difficulties.length - 1)
-                        )
-                      }
-                      disabled={currentDifficultyIdx === difficulties.length - 1}
-                    >
-                      <Text
-                        style={[
-                          styles.arrow,
-                          currentDifficultyIdx === difficulties.length - 1 &&
-                            styles.disabledArrow,
-                        ]}
-                      >
-                        {">"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View> */}
+                  <Text
+                    style={[
+                      styles.arrow,
+                      currentDifficultyIdx === 0 && styles.disabledArrow,
+                    ]}
+                  >
+                    {"<"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setCurrentDifficultyIdx((i) =>
+                      Math.min(i + 1, difficulties.length - 1)
+                    )
+                  }
+                  disabled={currentDifficultyIdx === difficulties.length - 1}
+                >
+                  <Text
+                    style={[
+                      styles.arrow,
+                      currentDifficultyIdx === difficulties.length - 1 &&
+                        styles.disabledArrow,
+                    ]}
+                  >
+                    {">"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <ChallengeCard
+                userInfo={userInfo}
+                twiinInfo={matchInfo}
+                difficulty={currentDifficulty}
+                challengeInfo={currentChallenge}
+                currSelectedId={selectedChallengeId}
+                voteForChallenge={setSelectedChallengeId}
+              />
+            </View>
+            <View style={styles.buttonWrapper}>
+
+            
             <CustomButton
-              backgroundColor={theme.colors.darkBlue}
+              backgroundColor={theme.colors.green}
               onPress={() => {
                 setSubmissionPage(true);
               }}
               style={styles.proceedButton}
-              disabled={!(selectedChallengeId !== matchSelectedChallengeId)}
+              disabled={selectedChallengeId !== matchSelectedChallengeId}
             >
-              PROCEED TO CHALLENGE
+              {selectedChallengeId !== matchSelectedChallengeId
+                ? "YOU MUST AGREE WITH YOUR TWIIN!"
+                : "PROCEED"}
             </CustomButton>
+            </View>
 
             {showToast && (
               <View style={styles.toastContainer}>
@@ -445,7 +423,7 @@ const styles = StyleSheet.create({
   challengeContent: {
     flex: 1,
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
   },
   challengeSectionTop: {
     justifyContent: "center",
@@ -455,8 +433,8 @@ const styles = StyleSheet.create({
   challengeSectionMiddle: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 10,
-    maxHeight: 150, // Optional: keep the content from growing too tall
+    paddingHorizontal: 50,
+    maxHeight: 150,
   },
   challengeText: {
     fontSize: 20,
@@ -515,8 +493,33 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
   },
-  proceedButton: {
-    maxWidth: "30%",
+  buttonWrapper: {
+    maxWidth: "80%",
+    alignSelf: "center",
+  },
+  challengeCardContainer: {
+    position: "relative",
+    marginBottom: 10,
+  },
+
+  overlapArrows: {
+    position: "absolute",
+    top: "40%",
+    left: 0,
+    right: 0,
+    zIndex: 2,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+  },
+
+  arrow: {
+    fontSize: 40,
+    color: "#000",
+  },
+
+  disabledArrow: {
+    color: "#aaa",
   },
 });
 

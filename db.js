@@ -136,21 +136,7 @@ export async function uploadVote(challengeId, userId) {
   if (userErr) return { voteIndex: null, error: userErr };
   console.log("User Record:", userRec);
 
-  const currentSelected = userRec.selected_challenge_id;
-
-  // If the user is clicking the same challenge again, undo the vote
-  if (currentSelected === challengeId) {
-    const { error: updateErr } = await supabase
-      .from('users')
-      .update({ selected_challenge_id: null })
-      .eq('id', userId);
-
-    if (updateErr) return { voteIndex: null, error: updateErr };
-    console.log("undone?");
-    return { voteIndex: null, error: null }; // vote undone
-  }
-
-  // Otherwise, update vote to the new challengeId
+  // Update vote to the new challengeId
   const { error: updateErr } = await supabase
     .from('users')
     .update({ selected_challenge_id: challengeId })
