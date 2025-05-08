@@ -270,6 +270,16 @@ export async function getChallenges() {
   return { data, error };
 }
 
+/* Returns the user ID if their submission is complete */
+export async function confirmSubmission(userId) {
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("challenge_id")
+    .eq("user_id", userId)
+  return { data, error };
+}
+
+
 //get Avatar url from the users id
 export const getAvatarUrl = (userId, ext = "jpg") => {
   const filePath = `avatars/${userId}.${ext}`;

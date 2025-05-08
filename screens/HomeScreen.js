@@ -18,12 +18,13 @@ import {
   getUserMatch,
   getUserProfile,
   uploadVote,
+  confirmSubmission
 } from "../db";
 import defaultProfile from "../assets/default_profile.jpg";
 import CustomButton from "../components/CustomButton";
 import ChallengeSubmissionView from "../components/ChallengeSubmissionView";
+import ChallengeCompleteView from "../components/ChallengeCompleteView";
 import ChallengeCard from "../components/ChallengeCard";
-import { useNavigation } from "@react-navigation/native";
 import TopBar from "../components/TopBar";
 
 const difficulties = ["EASY", "MEDIUM", "HARD"];
@@ -37,6 +38,7 @@ const HomeScreen = () => {
   const [challengesByDifficulty, setChallengesByDifficulty] = useState({});
   const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
   const [challengeIdx, setChallengeIdx] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
 
   const [matchInfo, setMatch] = useState(null);
   const [matchSelectedChallengeId, setMatchSelectedChallengeId] =
@@ -88,6 +90,14 @@ const HomeScreen = () => {
         setSelectedChallengeId(currUserData.selected_challenge_id);
       }
 
+      // See if a submission has already been made
+      const { data: submittedIds, error: submittedError} = await confirmSubmission(currentUser.id);
+      if (submittedIds && submittedIds.length > 0) {
+        console.log("user has already submitted!");
+        setSubmitted(true);
+      }
+      
+      // Get matched player
       const { match: matchData } = await getUserMatch(currentUser.id, 3);
       if (matchData) {
         setMatch(matchData);
@@ -154,6 +164,10 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.container}>
       <TopBar groupName="CS278" points={userPoints} />
 
+      {submitted ? (
+    <ChallengeCompleteView userInfo={userInfo} pointsEarned={300} setSubmitted={setSubmitted}/>
+  ) : (
+    <>
       <Text style={styles.timer}>
         ⏳
         {timeLeft.expired
@@ -167,17 +181,14 @@ const HomeScreen = () => {
 
       <View style={styles.body}>
         {loading ? (
-          <ActivityIndicator
-            size="large"
-            color="#000"
-            style={{ marginTop: 50 }}
-          />
+          <ActivityIndicator size="large" color="#000" style={{ marginTop: 50 }} />
         ) : showSubmissionScreen ? (
           <ChallengeSubmissionView
             setSubmissionPage={setSubmissionPage}
             chosenChallenge={currentChallenge}
             userInfo={userInfo}
             matchInfo={matchInfo}
+            setSubmitted={setSubmitted}
           />
         ) : (
           <>
@@ -275,7 +286,7 @@ const HomeScreen = () => {
               disabled={selectedChallengeId !== matchSelectedChallengeId}
             >
               {selectedChallengeId !== matchSelectedChallengeId
-                ? "YOU MUST AGREE WITH YOUR TWIIN!"
+                ? "YOU AND YOUR TWIN MUST AGREE!"
                 : "PROCEED"}
             </CustomButton>
             </View>
@@ -285,10 +296,12 @@ const HomeScreen = () => {
                 <Text style={styles.toastText}>Email copied!</Text>
               </View>
             )}
-          </>
+         </>
         )}
       </View>
-    </SafeAreaView>
+    </>
+  )}
+</SafeAreaView>
   );
 };
 
@@ -296,7 +309,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
   },
   body: {
     margin: 20,
