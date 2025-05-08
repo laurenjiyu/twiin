@@ -28,17 +28,7 @@ import TopBar from "../components/TopBar";
 
 const difficulties = ["EASY", "MEDIUM", "HARD"];
 
-const difficultyColors = {
-  EASY: "#C0F5E4", // Light green background
-  MEDIUM: "#FFBF91", // Light orange background
-  HARD: "#FDB4BD", // Light red background
-};
 
-const buttonColors = {
-  EASY: "#D3FF8C",
-  MEDIUM: "#FF9650",
-  HARD: "#FF8A8A",
-};
 
 const HomeScreen = () => {
   const [challengeRound, setChallengeRound] = useState(null);
@@ -114,10 +104,11 @@ const HomeScreen = () => {
           round.id
         );
 
+        console.log("Match data:", matchData);
+
         if (matchData) {
           setMatch(matchData);
           setMatchSelectedChallengeId(matchData.challenge_id);
-          console.log("right before the challenges, round id: ", round.id)
           // Get the list of challenges
           const { data: listData, error: listError } = await getChallengeList(
             round.id
@@ -318,7 +309,7 @@ const HomeScreen = () => {
                   </View>
                 </View> */}
             <CustomButton
-              backgroundColor={buttonColors[currentDifficulty]}
+              backgroundColor={theme.colors.darkBlue}
               onPress={() => {
                 setSubmissionPage(true);
               }}

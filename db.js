@@ -203,12 +203,10 @@ export async function getUserMatch(userId, challengeId) {
       .eq('challenge_id', challengeId)
       .or(`user_a.eq.${userId},user_b.eq.${userId}`)
       .single();
-      console.log("Match Record:", matchRec);
     if (matchErr || !matchRec) return { match: null, error: matchErr };
     // console.log("Match Record:", matchRec);
     // 2) determine the partner's ID
     const partnerId = matchRec.user_a === userId ? matchRec.user_b : matchRec.user_a;
-    console.log("Partner ID:", partnerId);
     // 3) fetch partner's profile
     const { data: partner, error: userErr } = await supabase
       .from('users')
