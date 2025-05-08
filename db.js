@@ -105,7 +105,7 @@ export async function updateUser(id, updates, avatarFile = null) {
 export async function getUserProfile(id) {
   const { data, error } = await supabase
     .from("users")
-    .select("id, name, email, avatar_url, created_at")
+    .select("id, name, email, avatar_url, created_at, total_points") 
     .eq("id", id)
     .single();
 
@@ -121,6 +121,49 @@ export async function listUsers(filter = "") {
   const { data, error } = await query;
   return { users: data, error };
 }
+
+/**
+ * Set the current user's vote for a given challenge, returning the index of their new vote.
+ * Returns null if undoing a vote.
+ */
+export async function uploadVote(challengeId, userId) {
+  // Fetch the user's current selected challenge
+  const { data: userRec, error: userErr } = await supabase
+    .from('users')
+    .select('selected_challenge_id')
+    .eq('id', userId)
+    .single();
+
+  if (userErr) return { voteIndex: null, error: userErr };
+
+  const currentSelected = userRec.selected_challenge_id;
+
+  // If the user is clicking the same challenge again, undo the vote
+  if (currentSelected === challengeId) {
+    const { error: updateErr } = await supabase
+      .from('users')
+      .update({ selected_challenge_id: null })
+      .eq('id', userId);
+
+    if (updateErr) return { voteIndex: null, error: updateErr };
+    return { voteIndex: null, error: null }; // vote undone
+  }
+
+  // Otherwise, update vote to the new challengeId
+  const { error: updateErr } = await supabase
+    .from('users')
+    .update({ selected_challenge_id: challengeId })
+    .eq('id', userId);
+
+  console.log(challengeId)
+
+  if (updateErr) return { voteIndex: null, error: updateErr };
+
+  console.log("Updated user selected challenge:", challengeId);
+
+  return { challengeId, error: null };
+}
+
 
 export const getChallengeList = async () => {
   const { data, error } = await supabase

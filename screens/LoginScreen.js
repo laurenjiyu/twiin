@@ -14,8 +14,8 @@ import theme from "../theme";
 import { supabase as db, createUser } from "../db";
 
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("laurenyu@stanford.edu");
+  const [password, setPassword] = useState("Password");
   const [loading, setLoading] = useState(false);
   const [creatingAccount, setCreatingAccount] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -120,6 +120,14 @@ export default function LoginScreen({ navigation }) {
           >
             CREATE ACCOUNT
           </CustomButton>
+          <CustomButton
+            onPress={signInWithEmail}
+            backgroundColor={theme.colors.darkOrange}
+            fontSize={18}
+          >
+            quick login
+          </CustomButton>
+
         </View>
       ) : (
         <View style={styles.centeredContent}>

@@ -10,7 +10,6 @@ const theme = {
       text: '#000000',                  // Default text color
       darkestBlue: '#243DB9',            // Leaderboard color
       green: '#D3FF8C',
-      mint: '#C0F5E4',
 
     },
     text: {

@@ -23,7 +23,6 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
         const { options } = descriptors[route.key];
         const label = route.name;
 
-
         const isFocused = state.index === index;
 
         const onPress = () => {

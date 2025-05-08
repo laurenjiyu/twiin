@@ -6,13 +6,13 @@ import { Feather } from "@expo/vector-icons";
 import theme from "../theme";
 import { useNavigation } from "@react-navigation/native";
 
-const ChallengeSubmissionView = ({ submissionPage, setSubmissionPage, chosenChallenge }) => {
+const ChallengeSubmissionView = ({ setSubmissionPage, chosenChallenge, currUser, currMatch }) => {
 
   return (
     <View style={styles.container}>
       <View style={styles.challengeCard}>
         <Text style={styles.title}>TWIINS</Text>
-        <Text style={styles.names}>LAUREN & KELSEA</Text>
+        <Text style={styles.names}>{} & {}</Text>
         <Text style={styles.title}>CHALLENGE</Text>
         <Text style={styles.challengeText}>
           {chosenChallenge}
@@ -22,7 +22,7 @@ const ChallengeSubmissionView = ({ submissionPage, setSubmissionPage, chosenChal
           backgroundColor={theme.colors.red}
           onPress={() => setSubmissionPage(false)}
         >
-          <Text style={styles.changeButtonText}>CHANGE</Text>
+          <Text style={styles.changeButtonText}>Change Challenge</Text>
         </CustomButton>
       </View>
 
