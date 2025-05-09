@@ -19,6 +19,8 @@ const ChallengeSubmissionView = ({
   chosenChallenge,
   userInfo,
   matchInfo,
+  setSubmitted,
+  addPoints
 }) => {
   const [media, setMedia] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -96,11 +98,14 @@ const ChallengeSubmissionView = ({
       if (insertError) throw insertError;
 
       Alert.alert("Success", "Your submission has been saved!");
+      
       setSubmissionPage(false); // go back to previous screen
     } catch (err) {
       console.error("Submission failed:", err);
       Alert.alert("Submission Failed", err.message || "Please try again.");
     } finally {
+      //addPoints(userInfo.id, chosenChallenge.points);
+      setSubmitted(true); 
       setUploading(false);
     }
   };

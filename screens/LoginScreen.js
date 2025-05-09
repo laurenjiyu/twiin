@@ -50,7 +50,6 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       // Step 1: Create the auth account
-      console.log("past try");
       const { data: signUpData, error: signUpError } = await db.auth.signUp({
         email,
         password,

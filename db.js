@@ -16,7 +16,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 //    - avatarFile: { uri, type, name }  (e.g. from ImagePicker)
 export async function createUser(userData, avatarFile = null) {
   let avatar_url = null;
-  console.log("got to create user");
   // 2a) If an avatar file was provided, upload it to Storage
   if (avatarFile) {
     // Convert RN file URI into a Blob
@@ -142,24 +141,18 @@ export async function uploadVote(challengeId, userId) {
     .update({ selected_challenge_id: challengeId })
     .eq('id', userId);
 
-  console.log(challengeId)
 
   if (updateErr) return { voteIndex: null, error: updateErr };
-
-  console.log("Updated user selected challenge:", challengeId);
-
   return { voteIndex: challengeId, error: null };
 }
 
 /* Gets list of challenges for a given round
  */
 export const getChallengeList = async (roundNumber) => {
-  console.log("bruh")
   const { data, error } = await supabase
     .from('challenge_list')
     .select('id, short_desc, full_desc, difficulty, point_value')
     .eq('challenge_round',roundNumber)
-  console.log("Challenge List:", data);
   return { data, error };
 };
 
@@ -167,7 +160,6 @@ export const getChallengeList = async (roundNumber) => {
  */
 export const getChallengeRound = async () => {
   const now = new Date().toISOString(); 
-  console.log("Current time:", now);
 
   const { data, error } = await supabase
     .from('challenge_rounds')
@@ -176,6 +168,29 @@ export const getChallengeRound = async () => {
     .gte('end_time', now)  
 
   return { data, error };
+};
+
+/* Adds or subtracts points from the current user
+ */
+export const addPoints = async (userId, pointChange) => {
+  const { data: user, error: fetchError } = await supabase
+    .from("users")
+    .select("total_points")
+    .eq("id", userId)
+    .single();
+
+  if (fetchError || !user) {
+    return { error: fetchError || new Error("User not found") };
+  }
+
+  const newPoints = user.total_points + pointChange;
+
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({ total_points: newPoints })
+    .eq("id", userId);
+
+  return { success: !updateError, newPoints, error: updateError };
 };
 
 
@@ -338,7 +353,6 @@ export async function setAvatar(userId, avatarFile) {
     .upload(filePath, bytes, { contentType, upsert: true });
 
   if (uploadError) {
-    console.log("Upload error:", uploadError);
     return { avatarUrl: null, error: uploadError };
   }
 
@@ -348,7 +362,6 @@ export async function setAvatar(userId, avatarFile) {
     .getPublicUrl(filePath);
 
   if (urlError || !publicURL) {
-    console.log("URL error:", urlError);
     return { avatarUrl: null, error: urlError };
   }
 

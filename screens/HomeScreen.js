@@ -157,9 +157,13 @@ const HomeScreen = () => {
     return () => clearInterval(timer);
   }, [challengeRound]);
 
+  useEffect(() => {
+    console.log("submitted status:", submitted);
+  }, [submitted]);
+
   const currentDifficulty = difficulties[currentDifficultyIdx];
   const currentChallenge = challengesByDifficulty[currentDifficulty];
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <TopBar groupName="CS278" points={userPoints} />
