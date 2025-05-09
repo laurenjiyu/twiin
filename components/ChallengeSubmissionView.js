@@ -13,6 +13,8 @@ import { Feather } from "@expo/vector-icons";
 import theme from "../theme";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../db"; // make sure this helper is defined
+import * as FileSystem from "expo-file-system";
+import { decode as atob } from "base-64";
 
 const ChallengeSubmissionView = ({
   setSubmissionPage,
@@ -20,7 +22,7 @@ const ChallengeSubmissionView = ({
   userInfo,
   matchInfo,
   setSubmitted,
-  addPoints
+  addPoints,
 }) => {
   const [media, setMedia] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -71,21 +73,33 @@ const ChallengeSubmissionView = ({
         throw new Error("User not authenticated");
       const user = session.user;
 
-      // Prepare file info
-      //use base64 conversion to get the image directly from bucket
-      //naming convention: try userid1+userid2+challengeid+timestamp
-      const fileExt = media.uri.split(".").pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `submissions/${fileName}`;
+      // Read file as base64
+      const base64 = await FileSystem.readAsStringAsync(media.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
-      // Upload image to Supabase storage
-      const response = await fetch(media.uri);
-      const blob = await response.blob();
+      // Create unique filename with timestamp and both users' IDs
+      const timestamp = Date.now();
+      const uniqueFileName = `${user.id}_${matchInfo.id}_${chosenChallenge.id}_${timestamp}.jpg`;
+      const contentType = media.mimeType || "image/jpeg";
+
+      // Ensure content type is valid
+      if (!contentType.startsWith("image/")) {
+        throw new Error("Invalid image type.");
+      }
+
+      // Decode base64 to binary
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        //base64 to bytes
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from("submissions")
-        .upload(filePath, blob, {
-          contentType: media.mimeType || "image/jpeg",
-        });
+        .upload(uniqueFileName, bytes, { contentType, upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -93,21 +107,20 @@ const ChallengeSubmissionView = ({
       const { error: insertError } = await supabase.from("submissions").insert({
         challenge_id: chosenChallenge.id,
         user_id: user.id,
-        payload: filePath,
+        payload: uniqueFileName,
         submitted_at: new Date().toISOString(),
       });
 
       if (insertError) throw insertError;
 
       Alert.alert("Success", "Your submission has been saved!");
-      
       setSubmissionPage(false); // go back to previous screen
     } catch (err) {
       console.error("Submission failed:", err);
       Alert.alert("Submission Failed", err.message || "Please try again.");
     } finally {
       //addPoints(userInfo.id, chosenChallenge.points);
-      setSubmitted(true); 
+      setSubmitted(true);
       setUploading(false);
     }
   };

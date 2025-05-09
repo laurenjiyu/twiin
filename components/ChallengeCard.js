@@ -43,15 +43,15 @@ const ChallengeCard = ({
         setIsLoadingTwiin(true);
       }
 
-      // First get the user's avatar_name from the database
+      // First get the user's data including avatar_name
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("avatar_name")
+        .select("name, profile_bio, total_points, avatar_name")
         .eq("id", userId)
         .single();
 
-      if (userError || !userData?.avatar_name) {
-        console.log("Error fetching avatar name:", userError);
+      if (userError) {
+        console.error("Error fetching user data:", userError);
         if (isUser) {
           setUserAvatarBase64(null);
         } else {
@@ -60,31 +60,34 @@ const ChallengeCard = ({
         return;
       }
 
-      // Use the avatar_name to download the file
-      const { data, error: downloadError } = await supabase.storage
-        .from("avatars")
-        .download(`avatars/${userData.avatar_name}`);
+      // Use avatar_name from the database
+      if (userData?.avatar_name) {
+        const { data, error: downloadError } = await supabase.storage
+          .from("avatars")
+          .download(userData.avatar_name);
 
-      if (downloadError) {
-        console.log("Error downloading avatar image:", downloadError);
-        if (isUser) {
-          setUserAvatarBase64(null);
-        } else {
-          setTwiinAvatarBase64(null);
+        if (downloadError) {
+          console.log("Error downloading avatar image:", downloadError);
+          console.log("Switch to default profile");
+          if (isUser) {
+            setUserAvatarBase64(null);
+          } else {
+            setTwiinAvatarBase64(null);
+          }
+          return;
         }
-        return;
+
+        // Convert the file to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(data);
+        reader.onloadend = () => {
+          if (isUser) {
+            setUserAvatarBase64(reader.result);
+          } else {
+            setTwiinAvatarBase64(reader.result);
+          }
+        };
       }
-
-      // Convert the file to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(data);
-      reader.onloadend = () => {
-        if (isUser) {
-          setUserAvatarBase64(reader.result);
-        } else {
-          setTwiinAvatarBase64(reader.result);
-        }
-      };
     } catch (error) {
       console.error("Error in fetchAvatar:", error);
     } finally {

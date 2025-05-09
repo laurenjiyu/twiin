@@ -26,6 +26,7 @@ import ChallengeSubmissionView from "../components/ChallengeSubmissionView";
 import ChallengeCompleteView from "../components/ChallengeCompleteView";
 import ChallengeCard from "../components/ChallengeCard";
 import TopBar from "../components/TopBar";
+import { useFocusEffect } from "@react-navigation/native";
 
 const difficulties = ["EASY", "MEDIUM", "HARD"];
 
@@ -59,82 +60,92 @@ const HomeScreen = () => {
     }
   };
 
-  //fetch user info
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      // Set up session
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession();
+  // Replace the existing useEffect for loading data with useFocusEffect
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadData = async () => {
+        setLoading(true);
+        // Set up session
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
 
-      if (sessionError || !sessionData.session) {
-        console.error("Error fetching session:", sessionError);
-        return;
-      } else {
-        console.log("retrieved session data");
-      }
-
-      // Get current user data
-      const currentUser = sessionData.session.user;
-
-      const { user: currUserData, error: userError } = await getUserProfile(
-        currentUser.id
-      );
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-      }
-      if (currUserData) {
-        setCurrentUser(currUserData);
-        setCurrentUserId(currUserData.id);
-        setUserPoints(currUserData.total_points);
-        setSelectedChallengeId(currUserData.selected_challenge_id);
-      }
-
-      // See if a submission has already been made
-      const { data: submittedIds, error: submittedError } =
-        await confirmSubmission(currentUser.id);
-      if (submittedIds && submittedIds.length > 0) {
-        console.log("user has already submitted!");
-        setSubmitted(true);
-      }
-
-      // Get matched player
-      const { match: matchData } = await getUserMatch(currentUser.id, 3);
-      if (matchData) {
-        setMatch(matchData);
-        setMatchSelectedChallengeId(matchData.selected_challenge_id);
-        // Get the list of challenges
-        const { data: listData, error: listError } = await getChallengeList(3);
-
-        if (listError) {
-          console.error("Error fetching challenge list:", listError);
+        if (sessionError || !sessionData.session) {
+          console.error("Error fetching session:", sessionError);
+          return;
         } else {
-          const grouped = {
-            EASY: {},
-            MEDIUM: {},
-            HARD: {},
-          };
-
-          // Create dictionary of dictionaries with the challenge data per difficulty level
-          listData.forEach((challenge) => {
-            const diff = challenge.difficulty;
-            if (grouped.hasOwnProperty(diff)) {
-              grouped[diff] = {
-                full_desc: challenge.full_desc,
-                id: challenge.id,
-                short_desc: challenge.short_desc,
-                point_value: challenge.point_value,
-              };
-            }
-          });
-          setChallengesByDifficulty(grouped);
+          console.log("retrieved session data");
         }
-      }
-      setLoading(false);
-    };
 
-    loadData();
-  }, []);
+        // Get current user data
+        const currentUser = sessionData.session.user;
+
+        const { user: currUserData, error: userError } = await getUserProfile(
+          currentUser.id
+        );
+        if (userError) {
+          console.error("Error fetching user data:", userError);
+        }
+        if (currUserData) {
+          setCurrentUser(currUserData);
+          setCurrentUserId(currUserData.id);
+          setUserPoints(currUserData.total_points);
+          setSelectedChallengeId(currUserData.selected_challenge_id);
+        }
+
+        // See if a submission has already been made
+        const { data: submittedIds, error: submittedError } =
+          await confirmSubmission(currentUser.id);
+        if (submittedIds && submittedIds.length > 0) {
+          console.log("user has already submitted!");
+          setSubmitted(true);
+        }
+
+        // Get matched player
+        const { match: matchData } = await getUserMatch(currentUser.id, 3);
+        if (matchData) {
+          setMatch(matchData);
+          setMatchSelectedChallengeId(matchData.selected_challenge_id);
+          // Get the list of challenges
+          const { data: listData, error: listError } = await getChallengeList(
+            3
+          );
+
+          if (listError) {
+            console.error("Error fetching challenge list:", listError);
+          } else {
+            const grouped = {
+              EASY: {},
+              MEDIUM: {},
+              HARD: {},
+            };
+
+            // Create dictionary of dictionaries with the challenge data per difficulty level
+            listData.forEach((challenge) => {
+              const diff = challenge.difficulty;
+              if (grouped.hasOwnProperty(diff)) {
+                grouped[diff] = {
+                  full_desc: challenge.full_desc,
+                  id: challenge.id,
+                  short_desc: challenge.short_desc,
+                  point_value: challenge.point_value,
+                };
+              }
+            });
+            setChallengesByDifficulty(grouped);
+          }
+        }
+        setLoading(false);
+      };
+
+      loadData();
+
+      // Cleanup function
+      return () => {
+        console.log("HomeScreen unfocused - cleaning up");
+        setLoading(true);
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (!challengeRound) return;
@@ -164,7 +175,7 @@ const HomeScreen = () => {
 
   const currentDifficulty = difficulties[currentDifficultyIdx];
   const currentChallenge = challengesByDifficulty[currentDifficulty];
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <TopBar groupName="CS278" points={userPoints} />
