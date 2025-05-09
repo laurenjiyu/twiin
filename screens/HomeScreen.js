@@ -18,7 +18,7 @@ import {
   getUserMatch,
   getUserProfile,
   uploadVote,
-  confirmSubmission
+  confirmSubmission,
 } from "../db";
 import defaultProfile from "../assets/default_profile.jpg";
 import CustomButton from "../components/CustomButton";
@@ -91,12 +91,13 @@ const HomeScreen = () => {
       }
 
       // See if a submission has already been made
-      const { data: submittedIds, error: submittedError} = await confirmSubmission(currentUser.id);
+      const { data: submittedIds, error: submittedError } =
+        await confirmSubmission(currentUser.id);
       if (submittedIds && submittedIds.length > 0) {
         console.log("user has already submitted!");
         setSubmitted(true);
       }
-      
+
       // Get matched player
       const { match: matchData } = await getUserMatch(currentUser.id, 3);
       if (matchData) {
@@ -169,143 +170,151 @@ const HomeScreen = () => {
       <TopBar groupName="CS278" points={userPoints} />
 
       {submitted ? (
-    <ChallengeCompleteView userInfo={userInfo} pointsEarned={300} setSubmitted={setSubmitted}/>
-  ) : (
-    <>
-      <Text style={styles.timer}>
-        ⏳
-        {timeLeft.expired
-          ? "00:00"
-          : `${timeLeft.days ? `${timeLeft.days}` : "0"}d ${
-              timeLeft.hours ? `${timeLeft.hours}` : "0"
-            }h ${timeLeft.minutes ? `${timeLeft.minutes}` : "0"}m ${
-              timeLeft.seconds ? `${timeLeft.seconds}` : "0"
-            }s`.trim()}
-      </Text>
+        <ChallengeCompleteView
+          userInfo={userInfo}
+          pointsEarned={300}
+          setSubmitted={setSubmitted}
+        />
+      ) : (
+        <>
+          <Text style={styles.timer}>
+            ⏳
+            {timeLeft.expired
+              ? "00:00"
+              : `${timeLeft.days ? `${timeLeft.days}` : "0"}d ${
+                  timeLeft.hours ? `${timeLeft.hours}` : "0"
+                }h ${timeLeft.minutes ? `${timeLeft.minutes}` : "0"}m ${
+                  timeLeft.seconds ? `${timeLeft.seconds}` : "0"
+                }s`.trim()}
+          </Text>
 
-      <View style={styles.body}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#000" style={{ marginTop: 50 }} />
-        ) : showSubmissionScreen ? (
-          <ChallengeSubmissionView
-            setSubmissionPage={setSubmissionPage}
-            chosenChallenge={currentChallenge}
-            userInfo={userInfo}
-            matchInfo={matchInfo}
-            setSubmitted={setSubmitted}
-          />
-        ) : (
-          <>
-            <View style={styles.matchCard}>
-              <Text style={styles.cardLabel}>YOUR TWIIN</Text>
-              {matchInfo ? (
-                <View style={styles.matchRow}>
-                  <Image
-                    source={
-                      matchInfo.avatar_url
-                        ? { uri: matchInfo.avatar_url }
-                        : defaultProfile
-                    }
-                    style={styles.avatar}
-                  />
-                  <Text style={styles.matchName}>{matchInfo.name}</Text>
-                  <TouchableOpacity onPress={copyEmailToClipboard}>
-                    <Icon
-                      name="mail-outline"
-                      size={24}
-                      style={styles.envelope}
-                    />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <Text style={styles.noMatchText}>No match found</Text>
-              )}
-              <CustomButton
-                backgroundColor={theme.colors.darkBlue}
-                style={styles.rematchButton}
-                disabled={true}
-              >
-                REMATCH
-              </CustomButton>
-            </View>
-
-            <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
-            {/*difficulty, challenge, voteButtonDisabled,*/}
-            <View style={styles.challengeCardContainer}>
-              <View style={styles.overlapArrows}>
-                <TouchableOpacity
-                  onPress={() =>
-                    setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
-                  }
-                  disabled={currentDifficultyIdx === 0}
-                >
-                  <Text
-                    style={[
-                      styles.arrow,
-                      currentDifficultyIdx === 0 && styles.disabledArrow,
-                    ]}
-                  >
-                    {"<"}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() =>
-                    setCurrentDifficultyIdx((i) =>
-                      Math.min(i + 1, difficulties.length - 1)
-                    )
-                  }
-                  disabled={currentDifficultyIdx === difficulties.length - 1}
-                >
-                  <Text
-                    style={[
-                      styles.arrow,
-                      currentDifficultyIdx === difficulties.length - 1 &&
-                        styles.disabledArrow,
-                    ]}
-                  >
-                    {">"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <ChallengeCard
-                userInfo={userInfo}
-                twiinInfo={matchInfo}
-                difficulty={currentDifficulty}
-                challengeInfo={currentChallenge}
-                currSelectedId={selectedChallengeId}
-                voteForChallenge={setSelectedChallengeId}
+          <View style={styles.body}>
+            {loading ? (
+              <ActivityIndicator
+                size="large"
+                color="#000"
+                style={{ marginTop: 50 }}
               />
-            </View>
-            <View style={styles.buttonWrapper}>
+            ) : showSubmissionScreen ? (
+              <ChallengeSubmissionView
+                setSubmissionPage={setSubmissionPage}
+                chosenChallenge={currentChallenge}
+                userInfo={userInfo}
+                matchInfo={matchInfo}
+                setSubmitted={setSubmitted}
+              />
+            ) : (
+              <>
+                <View style={styles.matchCard}>
+                  <Text style={styles.cardLabel}>YOUR TWIIN</Text>
+                  {matchInfo ? (
+                    <View style={styles.matchRow}>
+                      <Image
+                        source={
+                          matchInfo.avatar_url
+                            ? { uri: matchInfo.avatar_url }
+                            : defaultProfile
+                        }
+                        style={styles.avatar}
+                      />
+                      <Text style={styles.matchName}>{matchInfo.name}</Text>
+                      <TouchableOpacity onPress={copyEmailToClipboard}>
+                        <Icon
+                          name="mail-outline"
+                          size={24}
+                          style={styles.envelope}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <Text style={styles.noMatchText}>No match found</Text>
+                  )}
+                  <CustomButton
+                    backgroundColor={theme.colors.darkBlue}
+                    style={styles.rematchButton}
+                    disabled={true}
+                  >
+                    REMATCH
+                  </CustomButton>
+                </View>
 
-            
-            <CustomButton
-              backgroundColor={theme.colors.green}
-              onPress={() => {
-                setSubmissionPage(true);
-              }}
-              style={styles.proceedButton}
-              disabled={selectedChallengeId !== matchSelectedChallengeId}
-            >
-              {selectedChallengeId !== matchSelectedChallengeId
-                ? "YOU AND YOUR TWIN MUST AGREE!"
-                : "PROCEED"}
-            </CustomButton>
-            </View>
+                <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
+                {/*difficulty, challenge, voteButtonDisabled,*/}
+                <View style={styles.challengeCardContainer}>
+                  <View style={styles.overlapArrows}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
+                      }
+                      disabled={currentDifficultyIdx === 0}
+                    >
+                      <Text
+                        style={[
+                          styles.arrow,
+                          currentDifficultyIdx === 0 && styles.disabledArrow,
+                        ]}
+                      >
+                        {"<"}
+                      </Text>
+                    </TouchableOpacity>
 
-            {showToast && (
-              <View style={styles.toastContainer}>
-                <Text style={styles.toastText}>Email copied!</Text>
-              </View>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setCurrentDifficultyIdx((i) =>
+                          Math.min(i + 1, difficulties.length - 1)
+                        )
+                      }
+                      disabled={
+                        currentDifficultyIdx === difficulties.length - 1
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.arrow,
+                          currentDifficultyIdx === difficulties.length - 1 &&
+                            styles.disabledArrow,
+                        ]}
+                      >
+                        {">"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <ChallengeCard
+                    userInfo={userInfo}
+                    twiinInfo={matchInfo}
+                    difficulty={currentDifficulty}
+                    challengeInfo={currentChallenge}
+                    currSelectedId={selectedChallengeId}
+                    voteForChallenge={setSelectedChallengeId}
+                  />
+                </View>
+                <View style={styles.buttonWrapper}>
+                  <CustomButton
+                    backgroundColor={theme.colors.green}
+                    onPress={() => {
+                      setSubmissionPage(true);
+                    }}
+                    style={styles.proceedButton}
+                    disabled={selectedChallengeId !== matchSelectedChallengeId}
+                  >
+                    {selectedChallengeId !== matchSelectedChallengeId
+                      ? "YOU AND YOUR TWIN MUST AGREE!"
+                      : "PROCEED"}
+                  </CustomButton>
+                </View>
+
+                {showToast && (
+                  <View style={styles.toastContainer}>
+                    <Text style={styles.toastText}>Email copied!</Text>
+                  </View>
+                )}
+              </>
             )}
-         </>
-        )}
-      </View>
-    </>
-  )}
-</SafeAreaView>
+          </View>
+        </>
+      )}
+    </SafeAreaView>
   );
 };
 

@@ -104,7 +104,7 @@ export async function updateUser(id, updates, avatarFile = null) {
 export async function getUserProfile(id) {
   const { data, error } = await supabase
     .from("users")
-    .select("id, name, email, avatar_url, created_at, total_points") 
+    .select("id, name, email, avatar_url, created_at, total_points")
     .eq("id", id)
     .single();
   return { user: data, error };
@@ -127,9 +127,9 @@ export async function listUsers(filter = "") {
 export async function uploadVote(challengeId, userId) {
   // Fetch the user's current selected challenge
   const { data: userRec, error: userErr } = await supabase
-    .from('users')
-    .select('selected_challenge_id')
-    .eq('id', userId)
+    .from("users")
+    .select("selected_challenge_id")
+    .eq("id", userId)
     .single();
 
   if (userErr) return { voteIndex: null, error: userErr };
@@ -137,10 +137,11 @@ export async function uploadVote(challengeId, userId) {
 
   // Update vote to the new challengeId
   const { error: updateErr } = await supabase
-    .from('users')
+    .from("users")
     .update({ selected_challenge_id: challengeId })
-    .eq('id', userId);
+    .eq("id", userId);
 
+  console.log(challengeId);
 
   if (updateErr) return { voteIndex: null, error: updateErr };
   return { voteIndex: challengeId, error: null };
@@ -149,133 +150,117 @@ export async function uploadVote(challengeId, userId) {
 /* Gets list of challenges for a given round
  */
 export const getChallengeList = async (roundNumber) => {
+  console.log("bruh");
   const { data, error } = await supabase
-    .from('challenge_list')
-    .select('id, short_desc, full_desc, difficulty, point_value')
-    .eq('challenge_round',roundNumber)
+    .from("challenge_list")
+    .select("id, short_desc, full_desc, difficulty, point_value")
+    .eq("challenge_round", roundNumber);
+  console.log("Challenge List:", data);
   return { data, error };
 };
 
 /* Returns id # of the current challenge period based on current time
  */
 export const getChallengeRound = async () => {
-  const now = new Date().toISOString(); 
+  const now = new Date().toISOString();
+  console.log("Current time:", now);
 
   const { data, error } = await supabase
-    .from('challenge_rounds')
-    .select('id, start_time, end_time') 
-    .lte('start_time', now) 
-    .gte('end_time', now)  
+    .from("challenge_rounds")
+    .select("id, start_time, end_time")
+    .lte("start_time", now)
+    .gte("end_time", now);
 
   return { data, error };
 };
-
-/* Adds or subtracts points from the current user
- */
-export const addPoints = async (userId, pointChange) => {
-  const { data: user, error: fetchError } = await supabase
-    .from("users")
-    .select("total_points")
-    .eq("id", userId)
-    .single();
-
-  if (fetchError || !user) {
-    return { error: fetchError || new Error("User not found") };
-  }
-
-  const newPoints = user.total_points + pointChange;
-
-  const { error: updateError } = await supabase
-    .from("users")
-    .update({ total_points: newPoints })
-    .eq("id", userId);
-
-  return { success: !updateError, newPoints, error: updateError };
-};
-
 
 /**
  * Fetch the current user's match for a given challenge
  */
 export async function getUserMatch(userId, challengeId) {
-    // 1) get the match record involving this user
-    const { data: matchRec, error: matchErr } = await supabase
-      .from('matches')
-      .select('user_a, user_b')
-      .eq('challenge_id', challengeId)
-      .or(`user_a.eq.${userId},user_b.eq.${userId}`)
-      .single();
-    if (matchErr || !matchRec) return { match: null, error: matchErr };
-    // console.log("Match Record:", matchRec);
-    // 2) determine the partner's ID
-    const partnerId = matchRec.user_a === userId ? matchRec.user_b : matchRec.user_a;
-    // 3) fetch partner's profile
-    const { data: partner, error: userErr } = await supabase
-      .from('users')
-      .select('id, name, avatar_url, selected_challenge_id')
-      .eq('id', partnerId)
-      .single();
-    return { match: partner, error: userErr };
-  }
+  // 1) get the match record involving this user
+  const { data: matchRec, error: matchErr } = await supabase
+    .from("matches")
+    .select("user_a, user_b")
+    .eq("challenge_id", challengeId)
+    .or(`user_a.eq.${userId},user_b.eq.${userId}`)
+    .single();
+  if (matchErr || !matchRec) return { match: null, error: matchErr };
+  // console.log("Match Record:", matchRec);
+  // 2) determine the partner's ID
+  const partnerId =
+    matchRec.user_a === userId ? matchRec.user_b : matchRec.user_a;
+  // 3) fetch partner's profile
+  const { data: partner, error: userErr } = await supabase
+    .from("users")
+    .select("id, name, avatar_url, selected_challenge_id")
+    .eq("id", partnerId)
+    .single();
+  return { match: partner, error: userErr };
+}
 
-  /* Function to upload */
-  export async function uploadSubmissionMedia(userId, challengeId, fileUri, mimeType = "image/jpeg") {
-    try {
-      if (!userId || !fileUri || !challengeId) {
-        throw new Error("Missing user ID, file URI, or challenge ID");
-      }
-  
-      // Step 1: Upload file to Supabase storage
-      const fileExt = fileUri.split(".").pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `submissions/${fileName}`;
-  
-      const file = {
-        uri: fileUri,
-        name: fileName,
-        type: mimeType,
-      };
-  
-      const { error: uploadError } = await supabase.storage
-        .from("submissions")
-        .upload(filePath, file, {
-          contentType: mimeType,
-        });
-  
-      if (uploadError) throw uploadError;
-  
-      // Step 2: Insert row into the submissions table
-      const { error: insertError, data: submission } = await supabase
-        .from("submissions")
-        .insert({
-          challenge_id: challengeId,
-          user_id: userId,
-          payload: filePath, // store the storage path (or use getPublicUrl if you prefer)
-          submitted_at: new Date().toISOString(),
-        })
-        .single();
-  
-      if (insertError) throw insertError;
-  
-      return { success: true, submission };
-    } catch (err) {
-      console.error("uploadSubmissionMedia error:", err);
-      return { error: err.message || err };
+/* Function to upload */
+export async function uploadSubmissionMedia(
+  userId,
+  challengeId,
+  fileUri,
+  mimeType = "image/jpeg"
+) {
+  try {
+    if (!userId || !fileUri || !challengeId) {
+      throw new Error("Missing user ID, file URI, or challenge ID");
     }
-  }
 
-  /**
-   * (Optional) Fetch submissions/history for a user
-   */
-  export async function getUserSubmissions(userId) {
-    const { data, error } = await supabase
-      .from('submissions')
-      .select('id, challenge_id, payload, submitted_at')
-      .eq('user_id', userId)
-      .order('submitted_at', { ascending: false });
-    return { submissions: data, error };
+    // Step 1: Upload file to Supabase storage
+    const fileExt = fileUri.split(".").pop();
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const filePath = `submissions/${fileName}`;
+
+    const file = {
+      uri: fileUri,
+      name: fileName,
+      type: mimeType,
+    };
+
+    const { error: uploadError } = await supabase.storage
+      .from("submissions")
+      .upload(filePath, file, {
+        contentType: mimeType,
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Step 2: Insert row into the submissions table
+    const { error: insertError, data: submission } = await supabase
+      .from("submissions")
+      .insert({
+        challenge_id: challengeId,
+        user_id: userId,
+        payload: filePath, // store the storage path (or use getPublicUrl if you prefer)
+        submitted_at: new Date().toISOString(),
+      })
+      .single();
+
+    if (insertError) throw insertError;
+
+    return { success: true, submission };
+  } catch (err) {
+    console.error("uploadSubmissionMedia error:", err);
+    return { error: err.message || err };
   }
-  
+}
+
+/**
+ * (Optional) Fetch submissions/history for a user
+ */
+export async function getUserSubmissions(userId) {
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("id, challenge_id, payload, submitted_at")
+    .eq("user_id", userId)
+    .order("submitted_at", { ascending: false });
+  return { submissions: data, error };
+}
 
 export async function getChallenges() {
   const { data, error } = await supabase
@@ -290,17 +275,16 @@ export async function confirmSubmission(userId) {
   const { data, error } = await supabase
     .from("submissions")
     .select("challenge_id")
-    .eq("user_id", userId)
+    .eq("user_id", userId);
   return { data, error };
 }
 
-
-//get Avatar url from the users id
-export const getAvatarUrl = (userId, ext = "jpg") => {
-  const filePath = `avatars/${userId}.${ext}`;
-  const { publicURL } = supabase.storage.from("avatars").getPublicUrl(filePath);
-  return { avatarUrl: publicURL || null, error: null };
-};
+// //get Avatar url from the users id
+// export const getAvatarUrl = (userId, ext = "jpg") => {
+//   const filePath = `avatars/${userId}.${ext}`;
+//   const { publicURL } = supabase.storage.from("avatars").getPublicUrl(filePath);
+//   return { avatarUrl: publicURL || null, error: null };
+// };
 
 /**
  * Set (upload and update) the avatar for a user using base64 and FileSystem
@@ -323,11 +307,10 @@ export async function setAvatar(userId, avatarFile) {
     encoding: FileSystem.EncodingType.Base64,
   });
 
-  // Determine file extension and content type
-  let fileName = avatarFile.name || avatarFile.fileName;
-  //const ext = fileName.split("/").pop(); // e.g., "image/jpeg" -> "jpeg"
-  const ext = "jpg";
-  const contentType = avatarFile.type; // e.g., "image/jpeg"
+  // Create unique filename with timestamp
+  const timestamp = Date.now();
+  const uniqueFileName = `${userId}_${timestamp}.jpg`;
+  const contentType = avatarFile.type;
 
   // Ensure content type is valid
   if (!contentType.startsWith("image/")) {
@@ -337,8 +320,9 @@ export async function setAvatar(userId, avatarFile) {
     };
   }
 
-  // Use filePath format with the userId and extension
-  const filePath = `avatars/${userId}.${ext}`;
+  // Use filePath format with the unique filename
+  const filePath = uniqueFileName;
+  console.log("Generated filePath:", filePath); // Debug log
 
   // Decode base64 to binary
   const binary = atob(base64);
@@ -353,28 +337,31 @@ export async function setAvatar(userId, avatarFile) {
     .upload(filePath, bytes, { contentType, upsert: true });
 
   if (uploadError) {
-    return { avatarUrl: null, error: uploadError };
+    console.log("Upload error:", uploadError);
+    return { avatar_name: null, error: uploadError };
   }
 
-  // Get public URL for the uploaded avatar
-  const { publicURL, error: urlError } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(filePath);
-
-  if (urlError || !publicURL) {
-    return { avatarUrl: null, error: urlError };
-  }
-
-  // Update user row in the database with the new avatar URL
-  const { error: updateError } = await supabase
+  // Update user row in the database with the new avatar URL and filename
+  console.log("Attempting to update user with:", {
+    userId,
+    avatar_name: filePath,
+  });
+  console.log("filePath:", filePath);
+  console.log("userId:", userId);
+  const { data: updateData, error: updateError } = await supabase
     .from("users")
-    .update({ avatar_url: publicURL })
-    .eq("id", userId);
+    .update({
+      avatar_name: filePath,
+    })
+    .eq("id", userId)
+    .select(); // Add select to get the updated data
 
   if (updateError) {
     console.log("Update error:", updateError);
-    return { avatarUrl: null, error: updateError };
+    return { avatar_name: null, error: updateError };
   }
 
-  return { avatarUrl: publicURL, error: null };
+  console.log("Update successful, returned data:", updateData); // Debug log
+
+  return { avatar_name: filePath, error: null };
 }

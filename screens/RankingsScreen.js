@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   userCard: {
     width: "95%",
-    backgroundColor: theme.colors.yourMatchCard,
+    backgroundColor: theme.colors.blue,
     borderRadius: 12,
     borderColor: "#000",
     borderWidth: 1.25,

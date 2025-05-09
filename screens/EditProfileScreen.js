@@ -24,7 +24,7 @@ const EditProfileScreen = () => {
   const [bio, setBio] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [currentAvatarUrl, setCurrentAvatarUrl] = useState(null);
+  const [currentAvatarName, setCurrentAvatarName] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,7 +39,7 @@ const EditProfileScreen = () => {
           .eq("id", user.id)
           .single();
         setBio(profile?.profile_bio || "");
-        setCurrentAvatarUrl(profile?.avatar_url);
+        setCurrentAvatarName(profile?.avatar_name);
       }
     };
     fetchProfile();
@@ -85,8 +85,6 @@ const EditProfileScreen = () => {
       const user = session.user;
       if (!user) throw new Error("User not found");
 
-      let avatarUrlToUpdate = currentAvatarUrl;
-
       // Handle avatar upload if a new image is selected
       if (profileImage) {
         // Get the file extension and MIME type
@@ -103,23 +101,20 @@ const EditProfileScreen = () => {
         const avatarFile = {
           uri: profileImage.uri,
           type: mimeType,
-          name: `avatar.${extension}`, // Using extension for file name
+          name: `avatar.${extension}`,
         };
 
-        const { avatarUrl, error } = await setAvatar(user.id, avatarFile);
+        const { avatarName, error } = await setAvatar(user.id, avatarFile);
         if (error) throw error;
-        avatarUrlToUpdate = avatarUrl;
+        setCurrentAvatarName(avatarName);
       }
 
-      // Update bio and avatar_url (if changed)
-      const updateObj = { profile_bio: bio };
-      if (avatarUrlToUpdate) {
-        updateObj.avatar_url = avatarUrlToUpdate;
-      }
+      // Update bio
       const { error: updateError } = await supabase
         .from("users")
-        .update(updateObj)
+        .update({ profile_bio: bio, avatar_name: currentAvatarName })
         .eq("id", user.id);
+
       if (updateError) throw updateError;
 
       Alert.alert("Success", "Profile updated successfully!");

@@ -36,7 +36,7 @@ const ChallengeSubmissionView = ({
         );
         return;
       }
-
+      //get the image from the bucket*******
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -72,6 +72,8 @@ const ChallengeSubmissionView = ({
       const user = session.user;
 
       // Prepare file info
+      //use base64 conversion to get the image directly from bucket
+      //naming convention: try userid1+userid2+challengeid+timestamp
       const fileExt = media.uri.split(".").pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `submissions/${fileName}`;

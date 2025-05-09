@@ -17,6 +17,7 @@ import defaultProfile from "../assets/icons/anonymous.png"; //in square format r
 import CustomButton from "../components/CustomButton";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import TopBar from "../components/TopBar";
+import { useFocusEffect } from "@react-navigation/native";
 
 //Data of previous matches (sample data)
 const prevTwiins = [
@@ -48,9 +49,13 @@ const ProfileScreen = ({ navigation }) => {
   const [username, setUsername] = useState(defaultUsername);
   const [avatarBase64, setAvatarBase64] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      setAvatarBase64(null);
+
       const {
         data: { session },
         error: sessionError,
@@ -63,47 +68,59 @@ const ProfileScreen = ({ navigation }) => {
       const user = session.user;
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("name, profile_bio", "total_points")
+        .select("name, profile_bio, total_points, avatar_name")
         .eq("id", user.id)
         .single();
 
       if (userError) {
         console.error("Error fetching user data:", userError);
       }
-      setUserPoints(userData?.total_points ?? 0); //set for topbar
 
+      setUserPoints(userData?.total_points ?? 0);
       setUsername(userData?.name || defaultUsername);
       setProfileBio(userData?.profile_bio || "");
-      // Construct the correct path for the avatar
-      const avatarPath = `avatars/${user.id}.jpg`;
 
-      // Try downloading the avatar
-      const { data, error: downloadError } = await supabase.storage
-        .from("avatars")
-        .download(avatarPath);
+      // Use avatar_name from the database
+      if (userData?.avatar_name) {
+        const { data, error: downloadError } = await supabase.storage
+          .from("avatars")
+          .download(userData.avatar_name);
 
-      if (downloadError) {
-        console.log("Error downloading avatar image:", downloadError);
-        console.log("Switch to default profile");
-        return;
+        if (downloadError) {
+          console.log("Error downloading avatar image:", downloadError);
+          console.log("Switch to default profile");
+          setAvatarBase64(null);
+          return;
+        }
+
+        // Convert the file to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(data);
+        reader.onloadend = () => {
+          setAvatarBase64(reader.result);
+        };
       }
+    } catch (error) {
+      console.error("Error in fetchProfile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      // Convert the file to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(data);
-      reader.onloadend = () => {
-        setAvatarBase64(reader.result);
+  // Use useFocusEffect with cleanup
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("ProfileScreen focused - fetching profile data");
+      fetchProfile();
+
+      // Cleanup function
+      return () => {
+        console.log("ProfileScreen unfocused - cleaning up");
+        setAvatarBase64(null);
+        setIsLoading(true);
       };
-
-      if (bioError) {
-        console.error("Error fetching bio:", bioError);
-      } else {
-        setProfileBio(profile?.profile_bio || "");
-      }
-    };
-
-    fetchProfile();
-  }, []);
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -124,10 +141,15 @@ const ProfileScreen = ({ navigation }) => {
         <Text style={styles.profileName}>{username}</Text>
 
         <View style={styles.avatarContainer}>
-          <Image
-            source={avatarBase64 ? { uri: avatarBase64 } : defaultProfile}
-            style={styles.profileImage}
-          />
+          {isLoading ? (
+            <ActivityIndicator size="large" color={theme.colors.darkBlue} />
+          ) : (
+            <Image
+              source={avatarBase64 ? { uri: avatarBase64 } : defaultProfile}
+              style={styles.profileImage}
+              key={avatarBase64} // Add key to force re-render when avatar changes
+            />
+          )}
         </View>
         <Text style={styles.bioText}>
           {profileBio && profileBio.trim().length > 0

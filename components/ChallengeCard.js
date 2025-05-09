@@ -1,8 +1,8 @@
-import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, ActivityIndicator } from "react-native";
 import CustomButton from "./CustomButton";
 import theme from "../theme";
-import { uploadVote } from "../db";
+import { uploadVote, supabase } from "../db";
 
 const difficultyColors = {
   EASY: "#C0F5E4", // Light green background
@@ -17,26 +17,114 @@ const buttonColors = {
 };
 
 const ChallengeCard = ({
-  userInfo,
-  twiinInfo,
-  difficulty,
-  challengeInfo,
-  currSelectedId,
-  voteForChallenge,
+  userInfo = {},
+  twiinInfo = {},
+  difficulty = "EASY",
+  challengeInfo = {},
+  currSelectedId = null,
+  voteForChallenge = () => {},
 }) => {
+  const [userAvatarBase64, setUserAvatarBase64] = useState(null);
+  const [twiinAvatarBase64, setTwiinAvatarBase64] = useState(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const [isLoadingTwiin, setIsLoadingTwiin] = useState(false);
+
+  // Validate required props
+  if (!difficulty || !Object.keys(difficultyColors).includes(difficulty)) {
+    console.warn("Invalid difficulty level provided to ChallengeCard");
+    difficulty = "EASY"; // Fallback to EASY
+  }
+
+  const fetchAvatar = async (userId, isUser = true) => {
+    try {
+      if (isUser) {
+        setIsLoadingUser(true);
+      } else {
+        setIsLoadingTwiin(true);
+      }
+
+      // First get the user's avatar_name from the database
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("avatar_name")
+        .eq("id", userId)
+        .single();
+
+      if (userError || !userData?.avatar_name) {
+        console.log("Error fetching avatar name:", userError);
+        if (isUser) {
+          setUserAvatarBase64(null);
+        } else {
+          setTwiinAvatarBase64(null);
+        }
+        return;
+      }
+
+      // Use the avatar_name to download the file
+      const { data, error: downloadError } = await supabase.storage
+        .from("avatars")
+        .download(`avatars/${userData.avatar_name}`);
+
+      if (downloadError) {
+        console.log("Error downloading avatar image:", downloadError);
+        if (isUser) {
+          setUserAvatarBase64(null);
+        } else {
+          setTwiinAvatarBase64(null);
+        }
+        return;
+      }
+
+      // Convert the file to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(data);
+      reader.onloadend = () => {
+        if (isUser) {
+          setUserAvatarBase64(reader.result);
+        } else {
+          setTwiinAvatarBase64(reader.result);
+        }
+      };
+    } catch (error) {
+      console.error("Error in fetchAvatar:", error);
+    } finally {
+      if (isUser) {
+        setIsLoadingUser(false);
+      } else {
+        setIsLoadingTwiin(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (userInfo?.id) {
+      fetchAvatar(userInfo.id, true);
+    }
+    if (twiinInfo?.id) {
+      fetchAvatar(twiinInfo.id, false);
+    }
+  }, [userInfo?.id, twiinInfo?.id]);
+
   const handleVote = async () => {
     try {
+      if (!challengeInfo?.id || !userInfo?.id) {
+        console.error("Missing required IDs for voting");
+        return;
+      }
+
       console.log("Voting for challenge info:", challengeInfo);
       console.log("Current user ID:", userInfo.id);
+
       const { voteIndex, error } = await uploadVote(
         challengeInfo.id,
         userInfo.id
       );
+
       if (error) {
         console.error("Error voting for challenge:", error);
       } else {
         console.log("Voted for challenge ID:", voteIndex);
-        voteForChallenge(voteIndex); // Update parent state if needed
+        voteForChallenge(voteIndex);
       }
     } catch (err) {
       console.error("Unexpected error during vote:", err);
@@ -44,39 +132,50 @@ const ChallengeCard = ({
   };
 
   const alreadySelected = currSelectedId === (challengeInfo?.id || null);
-  const partnersChoice = twiinInfo.selected_challenge_id === (challengeInfo?.id || null);
-
+  const partnersChoice =
+    twiinInfo?.selected_challenge_id === (challengeInfo?.id || null);
 
   return (
     <View
       style={[
         styles.challengeCard,
-        { backgroundColor: difficultyColors[difficulty] },
+        {
+          backgroundColor:
+            difficultyColors[difficulty] || difficultyColors.EASY,
+        },
       ]}
     >
       {alreadySelected && (
         <View style={[styles.profileImageWrapper, styles.leftSide]}>
-          <Image
-            source={
-              userInfo.avatar_url
-                ? { uri: userInfo.avatar_url }
-                : require("../assets/icons/anonymous.png")
-            } // fallback to defaultProfile
-            style={styles.profileImage}
-          />
+          {isLoadingUser ? (
+            <ActivityIndicator size="small" color={theme.colors.darkBlue} />
+          ) : (
+            <Image
+              source={
+                userAvatarBase64
+                  ? { uri: userAvatarBase64 }
+                  : require("../assets/icons/anonymous.png")
+              }
+              style={styles.profileImage}
+            />
+          )}
         </View>
       )}
 
       {partnersChoice && (
         <View style={[styles.profileImageWrapper, styles.rightSide]}>
-          <Image
-            source={
-              twiinInfo.avatar_url
-                ? { uri: twiinInfo.avatar_url }
-                : require("../assets/icons/anonymous.png")
-            } // fallback to defaultProfile
-            style={styles.profileImage}
-          />
+          {isLoadingTwiin ? (
+            <ActivityIndicator size="small" color={theme.colors.darkBlue} />
+          ) : (
+            <Image
+              source={
+                twiinAvatarBase64
+                  ? { uri: twiinAvatarBase64 }
+                  : require("../assets/icons/anonymous.png")
+              }
+              style={styles.profileImage}
+            />
+          )}
         </View>
       )}
 
@@ -90,7 +189,7 @@ const ChallengeCard = ({
 
         <View style={styles.challengeSectionMiddle}>
           <Text style={styles.challengeText}>
-            {challengeInfo ? challengeInfo.full_desc : "No challenge"}
+            {challengeInfo?.full_desc || "No challenge available"}
           </Text>
         </View>
 
@@ -99,10 +198,10 @@ const ChallengeCard = ({
             backgroundColor={
               alreadySelected
                 ? theme.colors.lightGray
-                : buttonColors[difficulty]
+                : buttonColors[difficulty] || buttonColors.EASY
             }
             onPress={handleVote}
-            disabled={alreadySelected}
+            disabled={alreadySelected || !challengeInfo?.id}
           >
             {alreadySelected ? "CHALLENGE SELECTED" : "VOTE FOR CHALLENGE"}
           </CustomButton>
