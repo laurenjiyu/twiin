@@ -293,6 +293,7 @@ export async function confirmSubmission(userId) {
  * @param {object} avatarFile - { uri, type, fileName/name }
  * @returns {object} { avatarUrl, error }
  */
+
 export async function setAvatar(userId, avatarFile) {
   // Ensure the file is an image
   if (!avatarFile.type || !avatarFile.type.startsWith("image")) {

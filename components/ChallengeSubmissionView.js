@@ -26,7 +26,8 @@ const ChallengeSubmissionView = ({
 }) => {
   const [media, setMedia] = useState(null);
   const [uploading, setUploading] = useState(false);
-
+  matchInfo.name = matchInfo.name.toUpperCase();
+  userInfo.name = userInfo.name.toUpperCase();
   const handlePickMedia = async () => {
     try {
       const { status } =
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontFamily: theme.text.heading,
   },
-  names: { fontSize: 16, marginBottom: 12 },
+  names: { fontSize: 16, marginBottom: 12, fontWeight: "bold" },
   challengeText: { fontSize: 16, textAlign: "center", marginBottom: 12 },
   changeButton: {
     backgroundColor: "#4D9EEB",
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 6,
   },
-  changeButtonText: { color: "#fff", fontWeight: "bold" },
+  changeButtonText: { color: "#fff" },
   uploadCard: {
     backgroundColor: theme.colors.darkGray,
     borderRadius: 12,

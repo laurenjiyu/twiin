@@ -1,9 +1,33 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import TrophyIcon from "../assets/icons/DefaultTrophy.png";
+import { supabase, getUserProfile } from "../db.js"
 import theme from "../theme"; // Assuming your theme file includes color definitions
 
-const TopBar = ({ groupName = "CS278", points = null }) => {
+const TopBar = ({ groupName = "CS278"}) => {
+  const [points, setPoints] = React.useState(null);
+  useEffect(() => {
+  const loadData = async () => {
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+  
+        if (sessionError || !sessionData.session) {
+          console.error("Error fetching session:", sessionError);
+          return; //if user not logged in
+        }
+        
+        const currentUser = sessionData.session.user;
+        console.log("User:", currentUser);
+        const { user, error } = await getUserProfile(currentUser.id);
+        if (error) {
+          console.error("Error fetching user data:", error);
+          return;
+        }
+        console.log("User data:", user);
+        setPoints(user.total_points);
+  };
+  loadData();
+  }, []); // Empty dependency array to run only once on mount
   return (
     <View style={styles.container}>
       <View style={styles.leftContainer}>
