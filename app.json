@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "cs147l-24au-a4",
-    "slug": "cs147l-24au-a4",
+    "name": "Twiin",
+    "slug": "Twiin",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -15,14 +15,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.cs147l24aua4"
+      "bundleIdentifier": "com.anonymous.twiin"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.cs147l24aua4"
+      "package": "com.anonymous.twiin"
     },
     "web": {
       "bundler": "metro"

@@ -1,144 +1,156 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
+  SafeAreaView,
   Text,
   StyleSheet,
   Image,
   TouchableOpacity,
-  Button,
+  ActivityIndicator,
 } from "react-native";
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import Clipboard from '@react-native-clipboard/clipboard';
+import Icon from "react-native-vector-icons/MaterialIcons";
+import * as Clipboard from "expo-clipboard";
 import theme from "../theme";
 import {
   supabase,
   getChallengeList,
-  getChallengePeriod,
+  getChallengeRound,
   getUserMatch,
+  getUserProfile,
+  uploadVote,
+  confirmSubmission,
+  getChallengePeriod,
 } from "../db";
 import defaultProfile from "../assets/default_profile.jpg";
+import CustomButton from "../components/CustomButton";
+import ChallengeSubmissionView from "../components/ChallengeSubmissionView";
+import ChallengeCompleteView from "../components/ChallengeCompleteView";
+import ChallengeCard from "../components/ChallengeCard";
+import TopBar from "../components/TopBar";
+import { useFocusEffect } from "@react-navigation/native";
 
-const difficultyColors = {
-  EASY: "#DFFFEF",      // Light green background
-  MEDIUM: "#FFF3E0",    // Light orange background
-  HARD: "#FFEBEE"       // Light red background
-};
-
-const buttonColors = {
-  EASY: "#DFFF90", 
-  MEDIUM: "#FFBD59", 
-  HARD: "#FF7676"
-};
+const difficulties = ["EASY", "MEDIUM", "HARD"];
+const points = [100, 200, 300];
 
 const HomeScreen = () => {
-  const [challengePeriod, setChallengePeriod] = useState(null);
-  const [timeLeft, setTimeLeft] = useState({});
-  const [match, setMatch] = useState(null);
+  const [challengeRound, setChallengeRound] = useState(null);
+  const [selectedChallengeId, setSelectedChallengeId] = useState(null);
+  const [userInfo, setCurrentUser] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [challenges, setChallenges] = useState([]);
   const [challengesByDifficulty, setChallengesByDifficulty] = useState({});
   const [currentDifficultyIdx, setCurrentDifficultyIdx] = useState(0);
-  const [showToast, setShowToast] = useState(false);
+  const [challengeIdx, setChallengeIdx] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
 
-  const difficulties = ["EASY", "MEDIUM", "HARD"];
+  const [matchInfo, setMatch] = useState(null);
+  const [matchSelectedChallengeId, setMatchSelectedChallengeId] =
+    useState(null);
+
+  const [timeLeft, setTimeLeft] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showSubmissionScreen, setSubmissionPage] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [challengeSelected, selectChallenge] = useState(null);
+
   const copyEmailToClipboard = async () => {
-    if (match?.email) {
-      await Clipboard.setString(match.email);
+    if (matchInfo?.email) {
+      await Clipboard.setStringAsync(matchInfo.email);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
     }
   };
-  // const [currentUserId, setCurrentUserId] = useState(null);
-  //fetch user info
-  useEffect(() => {
-    const loadData = async () => {
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession();
 
-      if (sessionError || !sessionData.session) {
-        console.error("Error fetching session:", sessionError);
-        return; //if user not logged in
-      }
+  // Replace the existing useEffect for loading data with useFocusEffect
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadData = async () => {
+        setLoading(true);
+        // Set up session
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
 
-      const currentUser = sessionData.session.user;
+        if (sessionError || !sessionData.session) {
+          console.error("Error fetching session:", sessionError);
+          return;
+        } else {
+          console.log("retrieved session data");
+        }
 
-      const { data: listData } = await getChallengeList();
-      const grouped = {
-        EASY: [],
-        MEDIUM: [],
-        HARD: []
-      };
-      // console.log("List Data:", listData);
-      listData.forEach(challenge => {
-        grouped[challenge.difficulty]?.push(challenge);
-      });
-      // console.log("Grouped Challenges:", grouped);
-      const randomChallenges = {};
-      for (const diff of difficulties) {
-        const group = grouped[diff];
-        randomChallenges[diff] = group.length > 0 ? group[Math.floor(Math.random() * group.length)] : null;
-      }
-      // console.log("Random Challenges:", randomChallenges);
-      setChallengesByDifficulty(randomChallenges);
+        // Get current user data
+        const currentUser = sessionData.session.user;
 
-      const { data: periodData } = await getChallengePeriod();
-      if (periodData?.[0]) {
-        setChallengePeriod(periodData[0]);
-        // console.log("Challenge Period:", periodData[0]);
+        const { user: currUserData, error: userError } = await getUserProfile(
+          currentUser.id
+        );
+        if (userError) {
+          console.error("Error fetching user data:", userError);
+        }
+        if (currUserData) {
+          setCurrentUser(currUserData);
+          setCurrentUserId(currUserData.id);
+          setSelectedChallengeId(currUserData.selected_challenge_id);
+        }
 
-        // const { data: userData } = await getUserProfile(user.id);
-        console.log("Current User ID:", currentUser.id);
-        const { match: matchData } = await getUserMatch(currentUser.id, periodData[0].id);
+        // See if a submission has already been made
+        const { data: submittedIds, error: submittedError } =
+          await confirmSubmission(currentUser.id);
+        if (submittedIds && submittedIds.length > 0) {
+          console.log("user has already submitted!");
+          setSubmitted(true);
+        }
+
+        // Get matched player
+        const { match: matchData } = await getUserMatch(currentUser.id, 3);
         if (matchData) {
           setMatch(matchData);
-          console.log("Match Data:", matchData);
+          setMatchSelectedChallengeId(matchData.selected_challenge_id);
+          // Get the list of challenges
+          const { data: listData, error: listError } = await getChallengeList(
+            3
+          );
+
+          if (listError) {
+            console.error("Error fetching challenge list:", listError);
+          } else {
+            const grouped = {
+              EASY: {},
+              MEDIUM: {},
+              HARD: {},
+            };
+
+            // Create dictionary of dictionaries with the challenge data per difficulty level
+            listData.forEach((challenge) => {
+              const diff = challenge.difficulty;
+              if (grouped.hasOwnProperty(diff)) {
+                grouped[diff] = {
+                  full_desc: challenge.full_desc,
+                  id: challenge.id,
+                  short_desc: challenge.short_desc,
+                  point_value: challenge.point_value,
+                };
+              }
+            });
+            setChallengesByDifficulty(grouped);
+          }
         }
-      }
-    };
-    loadData();
-  }, []);
+        setLoading(false);
+      };
 
-  // useEffect(() => {
-  //   const loadData = async () => {
-  //     const { data: listData } = await getChallengeList();
-  //     const grouped = {
-  //       EASY: [],
-  //       MEDIUM: [],
-  //       HARD: []
-  //     };
-  //     console.log("List Data:", listData);
-  //     listData.forEach(challenge => {
-  //       grouped[challenge.difficulty]?.push(challenge);
-  //     });
-  //     console.log("Grouped Challenges:", grouped);
-  //     const randomChallenges = {};
-  //     for (const diff of difficulties) {
-  //       const group = grouped[diff];
-  //       randomChallenges[diff] = group.length > 0 ? group[Math.floor(Math.random() * group.length)] : null;
-  //     }
-  //     console.log("Random Challenges:", randomChallenges);
-  //     setChallengesByDifficulty(randomChallenges);
+      loadData();
 
-  //     const { data: periodData } = await getChallengePeriod();
-  //     if (periodData?.[0]) {
-  //       setChallengePeriod(periodData[0]);
-  //       console.log("Challenge Period:", periodData[0]);
-
-  //       // const { data: userData } = await getUserProfile(user.id);
-  //       console.log("Current User ID:", currentUserId);
-  //       const { match: matchData } = await getUserMatch(currentUserId, periodData[0].id);
-  //       if (matchData) {
-  //         setMatch(matchData);
-  //         console.log("Match Data:", matchData);
-  //       }
-  //     }
-  //   };
-
-  //   loadData();
-  // }, []);
+      // Cleanup function
+      return () => {
+        console.log("HomeScreen unfocused - cleaning up");
+        setLoading(true);
+      };
+    }, [])
+  );
 
   useEffect(() => {
-    if (!challengePeriod) return;
+    if (!challengeRound) return;
 
-    const endTime = new Date(challengePeriod.end_time);
+    const endTime = new Date(challengeRound.end_time);
     const updateTimer = () => {
       const now = new Date();
       const distance = endTime - now;
@@ -146,92 +158,182 @@ const HomeScreen = () => {
         setTimeLeft({ expired: true });
         return;
       }
-
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      setTimeLeft({ minutes, seconds, expired: false });
-    };
-
-    updateTimer();
-    const timer = setInterval(updateTimer, 1000);
-    return () => clearInterval(timer);
-  }, [challengePeriod]);
-
-  const currentDifficulty = difficulties[currentDifficultyIdx];
-  const currentChallenge = challengesByDifficulty[currentDifficulty];
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.timer}>⏳{timeLeft.expired ? "00:00" : `${String(timeLeft.minutes).padStart(2, '0')}:${String(timeLeft.seconds).padStart(2, '0')}`}    </Text>
-
-      {/* Match Card */}
-      <View style={styles.matchCard}>
-        <Text style={styles.matchHeader}>YOUR MATCH</Text>
-        {match ? (
-          <View style={styles.matchRow}>
-            <Image
-              source={match.avatar_url ? { uri: match.avatar_url } : defaultProfile}
-              style={styles.avatar}
-            />
-            <Text style={styles.matchName}>{match.name}</Text>
-            <TouchableOpacity onPress={copyEmailToClipboard}>
-              <Icon name="mail-outline" size={24} style={styles.envelope} />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <Text>No match found</Text>
-        )}
-        <TouchableOpacity style={styles.rematchButton}>
-          <Text style={styles.rematchText}>REMATCH</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
-        <View style={[styles.challengeCard, { backgroundColor: difficultyColors[currentDifficulty] }]}>
-          <View style={styles.challengeRow}>
-            <TouchableOpacity
-              onPress={() => setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))}
-              disabled={currentDifficultyIdx === 0}
-            >
-        <Text style={[styles.arrow, currentDifficultyIdx === 0 && styles.disabledArrow]}>{'<'}</Text>
-          </TouchableOpacity>
-
-          <View style={styles.challengeContent}>
-            <View style={styles.challengeSectionTop}>
-              <Text style={styles.difficultyLabel}>{currentDifficulty}</Text>
-              <Text style={styles.pointsLabel}>+100</Text>
-            </View>
-
-            <View style={styles.challengeSectionMiddle}>
-              <Text style={styles.challengeText}>
-                {currentChallenge ? currentChallenge.full_desc : "No challenge"}
-              </Text>
-            </View>
-
-            <View style={styles.challengeSectionBottom}>
-              <TouchableOpacity
-                style={[styles.selectButton, { backgroundColor: buttonColors[currentDifficulty] }]}
-              >
-                <Text style={styles.selectText}>SELECT</Text>
-              </TouchableOpacity>
-            </View>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => setCurrentDifficultyIdx((i) => Math.min(i + 1, difficulties.length - 1))}
-          disabled={currentDifficultyIdx === difficulties.length - 1}
-        >
-          <Text style={[styles.arrow, currentDifficultyIdx === difficulties.length - 1 && styles.disabledArrow]}>{'>'}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
   
-        {showToast && (
-          <View style={{ position: "absolute", bottom: 50, left: "50%", transform: [{ translateX: -50 }] }}>
-            <Text style={{ backgroundColor: "#000", color: "#fff", padding: 10, borderRadius: 5 }}>Email copied!</Text>
+      return {
+        hours: Math.floor(difference / (1000 * 60 * 60)),
+        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((difference % (1000 * 60)) / 1000),
+        expired: false
+      };
+    };
+  
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft());
+  
+    // Update every second
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+  
+    // Cleanup on unmount
+    return () => clearInterval(timer);
+  }, [challengeRound]); 
+  
+  const currentDifficulty = difficulties[currentDifficultyIdx];
+  const currentPoints = points[currentDifficultyIdx];
+  const currentChallenge = challengesByDifficulty[currentDifficulty];
+  // console.log("name", name);
+  // console.log("match avatar_url", match?.avatar_url);
+  return (
+    <SafeAreaView style={styles.container}>
+      <TopBar groupName="CS278" />
+
+      {submitted ? (
+        <ChallengeCompleteView
+          userInfo={userInfo}
+          pointsEarned={300}
+          setSubmitted={setSubmitted}
+        />
+      ) : (
+        <>
+          <Text style={styles.timer}>
+            ⏳
+            {timeLeft.expired
+              ? "Time's up!"
+              : `${timeLeft.days ? `${timeLeft.days}` : "0"}d ${
+                  timeLeft.hours ? `${timeLeft.hours}` : "0"
+                }h ${timeLeft.minutes ? `${timeLeft.minutes}` : "0"}m ${
+                  timeLeft.seconds ? `${timeLeft.seconds}` : "0"
+                }s`.trim()}
+          </Text>
+
+          <View style={styles.body}>
+            {loading ? (
+              <ActivityIndicator
+                size="large"
+                color="#000"
+                style={{ marginTop: 50 }}
+              />
+            ) : showSubmissionScreen ? (
+              <ChallengeSubmissionView
+                setSubmissionPage={setSubmissionPage}
+                chosenChallenge={currentChallenge}
+                userInfo={userInfo}
+                matchInfo={matchInfo}
+                setSubmitted={setSubmitted}
+              />
+            ) : (
+              <>
+                <View style={styles.matchCard}>
+                  <Text style={styles.cardLabel}>YOUR TWIIN</Text>
+                  {matchInfo ? (
+                    <View style={styles.matchRow}>
+                      <Image
+                        source={
+                          matchInfo.avatar_url
+                            ? { uri: matchInfo.avatar_url }
+                            : defaultProfile
+                        }
+                        style={styles.avatar}
+                      />
+                      <Text style={styles.matchName}>{matchInfo.name}</Text>
+                      <TouchableOpacity onPress={copyEmailToClipboard}>
+                        <Icon
+                          name="mail-outline"
+                          size={24}
+                          style={styles.envelope}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <Text style={styles.noMatchText}>No match found</Text>
+                  )}
+                  <CustomButton
+                    backgroundColor={theme.colors.darkBlue}
+                    style={styles.rematchButton}
+                    disabled={true}
+                  >
+                    REMATCH
+                  </CustomButton>
+                </View>
+
+                <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
+                {/*difficulty, challenge, voteButtonDisabled,*/}
+                <View style={styles.challengeCardContainer}>
+                  <View style={styles.overlapArrows}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setCurrentDifficultyIdx((i) => Math.max(i - 1, 0))
+                      }
+                      disabled={currentDifficultyIdx === 0}
+                    >
+                      <Text
+                        style={[
+                          styles.arrow,
+                          currentDifficultyIdx === 0 && styles.disabledArrow,
+                        ]}
+                      >
+                        {"<"}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() =>
+                        setCurrentDifficultyIdx((i) =>
+                          Math.min(i + 1, difficulties.length - 1)
+                        )
+                      }
+                      disabled={
+                        currentDifficultyIdx === difficulties.length - 1
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.arrow,
+                          currentDifficultyIdx === difficulties.length - 1 &&
+                            styles.disabledArrow,
+                        ]}
+                      >
+                        {">"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <ChallengeCard
+                    userInfo={userInfo}
+                    twiinInfo={matchInfo}
+                    difficulty={currentDifficulty}
+                    challengeInfo={currentChallenge}
+                    currSelectedId={selectedChallengeId}
+                    voteForChallenge={setSelectedChallengeId}
+                  />
+                </View>
+                <View style={styles.buttonWrapper}>
+                  <CustomButton
+                    backgroundColor={theme.colors.green}
+                    onPress={() => {
+                      setSubmissionPage(true);
+                    }}
+                    style={styles.proceedButton}
+                    disabled={selectedChallengeId !== matchSelectedChallengeId}
+                  >
+                    {selectedChallengeId !== matchSelectedChallengeId
+                      ? "YOU AND YOUR TWIN MUST AGREE!"
+                      : "PROCEED"}
+                  </CustomButton>
+                </View>
+
+                {showToast && (
+                  <View style={styles.toastContainer}>
+                    <Text style={styles.toastText}>Email copied!</Text>
+                  </View>
+                )}
+              </>
+            )}
           </View>
-        )}
-      </View>
+        </>
+      )}
+    </SafeAreaView>
   );
 };
 
@@ -239,80 +341,61 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
+  },
+  body: {
+    margin: 20,
+    paddingBottom: 100,
   },
   timer: {
-    fontSize: 28,
+    fontSize: 30,
+    fontFamily: theme.text.title_bold,
     fontWeight: "bold",
-    textAlign: "center", // centered again
-    marginBottom: 20,
+    textAlign: "center",
+    marginTop: 20,
   },
-  challengeRow: {
-    flexDirection: "row",
+  timerContainer: {
     alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
+    marginBottom: 15,
   },
-  
-  challengeContent: {
-    flex: 1,
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-  },
-  
-  challengeSectionTop: {
-    flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "start",
-    marginBottom: 20,
-  },
-  
-  pointsLabel: {
-    fontSize: 14,
-    color: "#333",
-  },
-  
-  challengeSectionMiddle: {
-    flex: 3,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 100, // keeps task vertically in place even if short
-  },
-  
-  challengeSectionBottom: {
-    flex: 1,
-    alignItems: "end",
-    alignContent: "space-between",
-  },
-  
-  envelope: {
-    marginLeft: 10,
-    color: '#111111',  // You can adjust the color as needed
+  loadingText: {
+    fontSize: 30,
+    fontFamily: theme.text.heading,
+    textAlign: "center",
   },
   matchCard: {
-    backgroundColor: "#AECBFA",
-    paddingHorizontal: 30, // Doubled horizontal padding
-    paddingVertical: 25,   // Increased vertical padding
-    borderRadius: 10,
+    backgroundColor: theme.colors.blue,
+    paddingHorizontal: 30,
+    paddingVertical: 25,
+    borderRadius: 15,
     alignItems: "center",
     marginBottom: 20,
-    height: 200, // 1.5x original height
     borderWidth: 1.5,
     borderColor: "#000",
     shadowColor: "#000",
-    shadowOffset: { width: 5, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  matchHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    shadowOffset: { width: 4, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   matchRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 10,
+  },
+  matchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  matchName: {
+    fontSize: 25,
+    fontFamily: theme.text.body,
+    marginLeft: 10,
+  },
+  envelope: {
+    marginLeft: 10,
+    color: "#111111",
     marginBottom: 10,
   },
   matchName: {
@@ -328,12 +411,16 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
   },
+  noMatchText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
   rematchButton: {
     paddingHorizontal: 15,
     paddingVertical: 6,
     backgroundColor: "#3367d6",
     borderRadius: 5,
-    width: 100, // smaller size
+    width: 100,
     height: 36,
     justifyContent: "center",
     alignItems: "center",
@@ -344,67 +431,97 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1.5,
     borderColor: "#000",
-    marginTop: 10, // added spacing after "No match found"
+    marginTop: 10,
   },
   rematchText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
   },
+  spacer: {
+    height: 10,
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginVertical: 10,
+  },
   challengeTitle: {
-    fontSize: 28, // match timer size
+    fontFamily: theme.text.heading,
+    fontSize: 28,
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
-    alignContent: "start",
   },
   challengeCard: {
-    flex: 1, // Ensures it fills available space
-    alignItems: "stretch",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderRadius: 10,
+    borderRadius: 15,
     paddingVertical: 25,
-    paddingHorizontal: 30,
+    paddingHorizontal: 10,
     borderWidth: 1.5,
     borderColor: "#000",
-    shadowColor: "#000",
-    shadowOffset: { width: 5, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
     elevation: 5,
-    marginBottom: 90, // Adds spacing below the card
+    marginBottom: 20,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 4, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  challengeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
   },
   challengeContent: {
     flex: 1,
-    alignItems: "center",
-    paddingHorizontal: 10,
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
   },
-  difficultyLabel: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 2, // tight spacing before points
-  },
-  challengeText: {
-    fontSize: 18, // Increased from 16
-    textAlign: "center",
-    textAlignVertical: "center",
-    marginBottom: 10,
-  },
-  selectButton: {
-    backgroundColor: "#DDD",
-    borderRadius: 5,
-    width: 100, // smaller size
-    height: 36,
+  challengeSectionTop: {
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 1, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-    borderWidth: 1.5,
-    borderColor: "#000",
+    marginBottom: 20,
+  },
+  challengeSectionMiddle: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 50,
+    maxHeight: 150,
+  },
+  challengeText: {
+    fontSize: 20,
+    textAlign: "center",
+    color: "black",
+    fontFamily: theme.text.body,
+    flexWrap: "wrap",
+    lineHeight: 24,
+  },
+  challengeSectionBottom: {
+    marginTop: 10,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  cardLabel: {
+    fontSize: 30,
+    fontFamily: theme.text.heading,
+    fontWeight: "bold",
+    color: "black",
+  },
+  difficultyText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  pointsLabel: {
+    fontSize: 14,
+    color: "black",
+  },
+  taskText: {
+    fontSize: 18,
+    textAlign: "center",
+    marginVertical: 15,
   },
   selectText: {
     fontWeight: "bold",
@@ -413,10 +530,50 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 32,
     color: "#000",
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
   },
   disabledArrow: {
     color: "#ccc",
+  },
+  toastContainer: {
+    position: "absolute",
+    bottom: 50,
+    left: "50%",
+    transform: [{ translateX: -50 }],
+  },
+  toastText: {
+    backgroundColor: "#000",
+    color: "#fff",
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonWrapper: {
+    maxWidth: "80%",
+    alignSelf: "center",
+  },
+  challengeCardContainer: {
+    position: "relative",
+    marginBottom: 10,
+  },
+
+  overlapArrows: {
+    position: "absolute",
+    top: "40%",
+    left: 0,
+    right: 0,
+    zIndex: 2,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+  },
+
+  arrow: {
+    fontSize: 40,
+    color: "#000",
+  },
+
+  disabledArrow: {
+    color: "#aaa",
   },
 });
 

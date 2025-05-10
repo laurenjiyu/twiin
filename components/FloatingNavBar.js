@@ -1,19 +1,19 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import TabIcon from './TabIcon';
+import React from "react";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import TabIcon from "./TabIcon";
 
 const FloatingNavBar = ({ state, descriptors, navigation }) => {
   const getIconName = (label) => {
     switch (label) {
-      case 'Home':
-        return 'home-outline';
-      case 'Rankings':
-        return 'trophy-outline';
-      case 'Profile':
-        return 'person-outline';
+      case "Home":
+        return "home-outline";
+      case "Rankings":
+        return "trophy-outline";
+      case "Profile":
+        return "person-outline";
       default:
-        return 'home-outline';
+        return "home-outline";
     }
   };
 
@@ -21,12 +21,7 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
     <View style={styles.container}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-            ? options.title
-            : route.name;
+        const label = route.name;
 
         const isFocused = state.index === index;
 
@@ -42,10 +37,7 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
             onPress={onPress}
             style={styles.tabButton}
           >
-            <TabIcon
-              name={getIconName(label)}
-              focused={isFocused}
-            />
+            <TabIcon name={getIconName(label)} focused={isFocused} />
           </TouchableOpacity>
         );
       })}
@@ -55,22 +47,22 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 20,
-    left: 100,
-    right: 100,
-    flexDirection: 'row',
-    backgroundColor: 'black',
+    position: "absolute",
+    bottom: 40,
+    left: 80,
+    right: 80,
+    flexDirection: "row",
+    backgroundColor: "black",
     borderRadius: 30,
-    height: 70,
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    height: 50,
+    justifyContent: "space-around",
+    alignItems: "center",
     zIndex: 100,
     elevation: 10,
   },
   tabButton: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
 });
 
