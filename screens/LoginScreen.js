@@ -63,7 +63,7 @@ export default function LoginScreen({ navigation }) {
       const userId = signUpData?.user?.id;
 
       if (!userId) {
-        Alert.alert("Signup failed", "User ID not returned.");
+        Alert.alert("Signup failed", "Twiin ID not returned.");
         return;
       }
 
@@ -74,7 +74,7 @@ export default function LoginScreen({ navigation }) {
       });
 
       if (profileError) {
-        Alert.alert("User profile creation failed", profileError.message);
+        Alert.alert("Twiin profile creation failed", profileError.message);
         return;
       }
 

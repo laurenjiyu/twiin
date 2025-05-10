@@ -19,6 +19,7 @@ import {
   getUserProfile,
   uploadVote,
   confirmSubmission,
+  getChallengePeriod,
 } from "../db";
 import defaultProfile from "../assets/default_profile.jpg";
 import CustomButton from "../components/CustomButton";
@@ -29,6 +30,7 @@ import TopBar from "../components/TopBar";
 import { useFocusEffect } from "@react-navigation/native";
 
 const difficulties = ["EASY", "MEDIUM", "HARD"];
+const points = [100, 200, 300];
 
 const HomeScreen = () => {
   const [challengeRound, setChallengeRound] = useState(null);
@@ -48,7 +50,6 @@ const HomeScreen = () => {
   const [timeLeft, setTimeLeft] = useState({});
   const [loading, setLoading] = useState(true);
   const [showSubmissionScreen, setSubmissionPage] = useState(false);
-  const [userPoints, setUserPoints] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [challengeSelected, selectChallenge] = useState(null);
 
@@ -88,7 +89,6 @@ const HomeScreen = () => {
         if (currUserData) {
           setCurrentUser(currUserData);
           setCurrentUserId(currUserData.id);
-          setUserPoints(currUserData.total_points);
           setSelectedChallengeId(currUserData.selected_challenge_id);
         }
 
@@ -158,27 +158,35 @@ const HomeScreen = () => {
         setTimeLeft({ expired: true });
         return;
       }
-
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      setTimeLeft({ minutes, seconds, expired: false });
+  
+      return {
+        hours: Math.floor(difference / (1000 * 60 * 60)),
+        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((difference % (1000 * 60)) / 1000),
+        expired: false
+      };
     };
-
-    updateTimer();
-    const timer = setInterval(updateTimer, 1000);
+  
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft());
+  
+    // Update every second
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+  
+    // Cleanup on unmount
     return () => clearInterval(timer);
-  }, [challengeRound]);
-
-  useEffect(() => {
-    console.log("submitted status:", submitted);
-  }, [submitted]);
-
+  }, [challengeRound]); 
+  
   const currentDifficulty = difficulties[currentDifficultyIdx];
+  const currentPoints = points[currentDifficultyIdx];
   const currentChallenge = challengesByDifficulty[currentDifficulty];
-
+  // console.log("name", name);
+  // console.log("match avatar_url", match?.avatar_url);
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar groupName="CS278" points={userPoints} />
+      <TopBar groupName="CS278" />
 
       {submitted ? (
         <ChallengeCompleteView
@@ -191,7 +199,7 @@ const HomeScreen = () => {
           <Text style={styles.timer}>
             ⏳
             {timeLeft.expired
-              ? "00:00"
+              ? "Time's up!"
               : `${timeLeft.days ? `${timeLeft.days}` : "0"}d ${
                   timeLeft.hours ? `${timeLeft.hours}` : "0"
                 }h ${timeLeft.minutes ? `${timeLeft.minutes}` : "0"}m ${
