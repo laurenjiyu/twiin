@@ -153,7 +153,9 @@ export const getChallengeList = async (roundNumber) => {
   console.log("bruh");
   const { data, error } = await supabase
     .from("challenge_list")
-    .select("id, short_desc, full_desc, difficulty, point_value")
+    .select(
+      "id, short_desc, full_desc, difficulty, point_value, challenge_round"
+    )
     .eq("challenge_round", roundNumber);
   console.log("Challenge List:", data);
   return { data, error };

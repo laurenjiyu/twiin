@@ -101,13 +101,13 @@ const HomeScreen = () => {
         }
 
         // Get matched player
-        const { match: matchData } = await getUserMatch(currentUser.id, 3);
+        const { match: matchData } = await getUserMatch(currentUser.id, 4);
         if (matchData) {
           setMatch(matchData);
           setMatchSelectedChallengeId(matchData.selected_challenge_id);
           // Get the list of challenges
           const { data: listData, error: listError } = await getChallengeList(
-            3
+            4
           );
 
           if (listError) {
@@ -128,6 +128,7 @@ const HomeScreen = () => {
                   id: challenge.id,
                   short_desc: challenge.short_desc,
                   point_value: challenge.point_value,
+                  challenge_round: challenge.challenge_round,
                 };
               }
             });
@@ -158,27 +159,27 @@ const HomeScreen = () => {
         setTimeLeft({ expired: true });
         return;
       }
-  
+
       return {
         hours: Math.floor(difference / (1000 * 60 * 60)),
         minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
         seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        expired: false
+        expired: false,
       };
     };
-  
+
     // Initial calculation
     setTimeLeft(calculateTimeLeft());
-  
+
     // Update every second
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
-  
+
     // Cleanup on unmount
     return () => clearInterval(timer);
-  }, [challengeRound]); 
-  
+  }, [challengeRound]);
+
   const currentDifficulty = difficulties[currentDifficultyIdx];
   const currentPoints = points[currentDifficultyIdx];
   const currentChallenge = challengesByDifficulty[currentDifficulty];

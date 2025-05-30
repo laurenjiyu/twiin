@@ -8,6 +8,8 @@ const FloatingNavBar = ({ state, descriptors, navigation }) => {
     switch (label) {
       case "Home":
         return "home-outline";
+      case "Feed":
+        return "newspaper-outline";
       case "Rankings":
         return "trophy-outline";
       case "Profile":

@@ -107,7 +107,9 @@ const ChallengeSubmissionView = ({
       // Insert row into 'submissions' table
       const { error: insertError } = await supabase.from("submissions").insert({
         challenge_id: chosenChallenge.id,
+        round_id: chosenChallenge.challenge_round,
         user_id: user.id,
+        partner_id: matchInfo.id,
         payload: uniqueFileName,
         submitted_at: new Date().toISOString(),
       });
