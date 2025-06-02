@@ -114,7 +114,7 @@ const HomeScreen = () => {
           setMatchSelectedChallengeId(matchData.selected_challenge_id);
 
           const { data: listData, error: listError } = await getChallengeList(
-            1
+            5
           );
           if (listError) {
             console.error("Error fetching challenge list:", listError);
@@ -204,7 +204,7 @@ const HomeScreen = () => {
         />
       ) : (
         <>
-                        <TimeHeader endTime={challengeRound.end_time} />
+          <TimeHeader endTime={challengeRound.end_time} />
 
           <View style={styles.body}>
             {loading ? (

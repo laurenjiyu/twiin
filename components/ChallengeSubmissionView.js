@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import CustomButton from "./CustomButton";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
 import theme from "../theme";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../db"; // make sure this helper is defined
@@ -26,6 +26,7 @@ const ChallengeSubmissionView = ({
 }) => {
   const [media, setMedia] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [postInFeed, setPostInFeed] = useState(false);
   matchInfo.name = matchInfo.name.toUpperCase();
   userInfo.name = userInfo.name.toUpperCase();
   const handlePickMedia = async () => {
@@ -93,7 +94,6 @@ const ChallengeSubmissionView = ({
       const binary = atob(base64);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) {
-        //base64 to bytes
         bytes[i] = binary.charCodeAt(i);
       }
 
@@ -104,17 +104,49 @@ const ChallengeSubmissionView = ({
 
       if (uploadError) throw uploadError;
 
-      // Insert row into 'submissions' table
-      const { error: insertError } = await supabase.from("submissions").insert({
-        challenge_id: chosenChallenge.id,
-        round_id: chosenChallenge.challenge_round,
-        user_id: user.id,
-        partner_id: matchInfo.id,
-        payload: uniqueFileName,
-        submitted_at: new Date().toISOString(),
-      });
+      // Check if submission already exists
+      const { data: existingSubmission, error: checkError } = await supabase
+        .from("submissions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("partner_id", matchInfo.id)
+        .eq("challenge_id", chosenChallenge.id)
+        .single();
 
-      if (insertError) throw insertError;
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116 is "no rows returned" error
+        throw checkError;
+      }
+
+      let error;
+      if (existingSubmission) {
+        // Update existing submission
+        const { error: updateError } = await supabase
+          .from("submissions")
+          .update({
+            submitted_at: new Date().toISOString(),
+            post_bool: postInFeed,
+            payload: uniqueFileName,
+          })
+          .eq("id", existingSubmission.id);
+        error = updateError;
+      } else {
+        // Insert new submission
+        const { error: insertError } = await supabase
+          .from("submissions")
+          .insert({
+            challenge_id: chosenChallenge.id,
+            round_id: chosenChallenge.challenge_round,
+            user_id: user.id,
+            partner_id: matchInfo.id,
+            payload: uniqueFileName,
+            submitted_at: new Date().toISOString(),
+            post_bool: postInFeed,
+          });
+        error = insertError;
+      }
+
+      if (error) throw error;
 
       Alert.alert("Success", "Your submission has been saved!");
       setSubmissionPage(false); // go back to previous screen
@@ -122,7 +154,6 @@ const ChallengeSubmissionView = ({
       console.error("Submission failed:", err);
       Alert.alert("Submission Failed", err.message || "Please try again.");
     } finally {
-      //addPoints(userInfo.id, chosenChallenge.points);
       setSubmitted(true);
       setUploading(false);
     }
@@ -162,6 +193,20 @@ const ChallengeSubmissionView = ({
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Checkbox for posting in group feed */}
+      <TouchableOpacity
+        style={styles.checkboxRow}
+        onPress={() => setPostInFeed((prev) => !prev)}
+        activeOpacity={0.7}
+      >
+        <MaterialIcons
+          name={postInFeed ? "check-box" : "check-box-outline-blank"}
+          size={24}
+          color={postInFeed ? theme.colors.blue : "#aaa"}
+        />
+        <Text style={styles.checkboxLabel}>Post in group feed?</Text>
+      </TouchableOpacity>
 
       <CustomButton
         color="#000"
@@ -231,6 +276,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   submitButton: { width: "100%" },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#000",
+    borderRadius: 8,
+    padding: 8,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: theme.colors.black,
+    fontFamily: theme.text.body,
+  },
 });
 
 export default ChallengeSubmissionView;

@@ -15,7 +15,7 @@ import { supabase } from "../db";
 
 const ChallengeCompleteView = ({
   userInfo,
-  pointsEarned = 300,
+  pointsEarned = 25,
   setSubmitted,
 }) => {
   const navigation = useNavigation();
@@ -89,9 +89,7 @@ const ChallengeCompleteView = ({
         />
       )}
 
-      <Text style={styles.pointsText}>
-        + {userInfo.total_points + pointsEarned}
-      </Text>
+      <Text style={styles.pointsText}>+ {pointsEarned}</Text>
       <Text style={styles.completeText}>CHALLENGE COMPLETE! 🎉</Text>
       <Text style={styles.huzzahText}>HUZZAH!</Text>
       <Text style={styles.earnedText}>You just earned {pointsEarned} 🏆!</Text>

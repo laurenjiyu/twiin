@@ -27,6 +27,7 @@ const FeedScreen = () => {
   const cardRefs = useRef({});
   const [selectedReactionsId, setSelectedReactionsId] = useState(null);
   const [reactionsButtonPosition, setReactionsButtonPosition] = useState(null);
+  const [submissionImages, setSubmissionImages] = useState({});
 
   // Fetch user info
   useEffect(() => {
@@ -45,9 +46,8 @@ const FeedScreen = () => {
   // Fetch submissions with related data
   useEffect(() => {
     const fetchData = async () => {
-      if (!currentUserId) return; // Don't fetch if we don't have currentUserId yet
+      if (!currentUserId) return;
 
-      // Fetch submissions with related data
       const { data: submissionsData, error: submissionsError } = await supabase
         .from("submissions")
         .select(
@@ -57,6 +57,8 @@ const FeedScreen = () => {
           challenge_id,
           user_id,
           partner_id,
+          post_bool,
+          payload,
           users!submissions_user_id_fkey (
             name
           ),
@@ -77,6 +79,42 @@ const FeedScreen = () => {
       }
 
       setSubmissions(submissionsData);
+
+      // Fetch images for submissions with post_bool = true
+      for (const submission of submissionsData) {
+        if (submission.post_bool) {
+          try {
+            const { data, error: downloadError } = await supabase.storage
+              .from("submissions")
+              .download(submission.payload);
+
+            if (downloadError) {
+              console.log("Error downloading submission image:", downloadError);
+              setSubmissionImages((prev) => ({
+                ...prev,
+                [submission.id]: null,
+              }));
+              continue;
+            }
+
+            // Convert the file to base64
+            const reader = new FileReader();
+            reader.readAsDataURL(data);
+            reader.onloadend = () => {
+              setSubmissionImages((prev) => ({
+                ...prev,
+                [submission.id]: reader.result,
+              }));
+            };
+          } catch (error) {
+            console.error("Error processing image:", error);
+            setSubmissionImages((prev) => ({
+              ...prev,
+              [submission.id]: null,
+            }));
+          }
+        }
+      }
 
       // After fetching submissions, fetch reactions for each
       for (const submission of submissionsData) {
@@ -316,7 +354,6 @@ const FeedScreen = () => {
             ref={(ref) => (cardRefs.current[submission.id] = ref)}
           >
             <View style={styles.submissionContent}>
-              {/* Your full card content here */}
               <View style={styles.mainContent}>
                 <View style={styles.headerRow}>
                   <Text style={styles.names}>
@@ -334,6 +371,16 @@ const FeedScreen = () => {
                     </Text>
                   </View>
                 </View>
+                {/* Add image display for posts */}
+                {submission.post_bool && submissionImages[submission.id] && (
+                  <View style={styles.submissionImageContainer}>
+                    <Image
+                      source={{ uri: submissionImages[submission.id] }}
+                      style={styles.submissionImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                )}
               </View>
             </View>
 
@@ -474,7 +521,7 @@ const styles = StyleSheet.create({
   allReactionsContainer: {
     position: "absolute",
     right: 0, // Align to the ScrollView's right edge
-    top: 65, // Adjust to align vertically with the card
+    bottom: -25, // Adjust to align vertically with the card
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
@@ -627,6 +674,20 @@ const styles = StyleSheet.create({
   reactionEmojiCol: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  submissionImageContainer: {
+    width: "100%",
+    marginTop: 1,
+    marginBottom: 6,
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.darkestBlue,
+  },
+  submissionImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
   },
 });
 
