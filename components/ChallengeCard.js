@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     maxHeight: 150, // Optional: keep the content from growing too tall
   },
   challengeText: {
-    fontSize: 20,
+    fontSize: 16,
     textAlign: "center",
     color: "black",
     fontFamily: theme.text.body,

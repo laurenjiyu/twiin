@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import TimeHeader from "../components/TimeHeader";
+import MatchCard from "../components/MatchCard";
 import * as Clipboard from "expo-clipboard";
 import theme from "../theme";
 import {
@@ -26,6 +28,7 @@ import CustomButton from "../components/CustomButton";
 import ChallengeSubmissionView from "../components/ChallengeSubmissionView";
 import ChallengeCompleteView from "../components/ChallengeCompleteView";
 import ChallengeCard from "../components/ChallengeCard";
+import Timer from "../components/Timer";
 import TopBar from "../components/TopBar";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -66,18 +69,14 @@ const HomeScreen = () => {
     React.useCallback(() => {
       const loadData = async () => {
         setLoading(true);
-        // Set up session
         const { data: sessionData, error: sessionError } =
           await supabase.auth.getSession();
 
         if (sessionError || !sessionData.session) {
           console.error("Error fetching session:", sessionError);
           return;
-        } else {
-          console.log("retrieved session data");
         }
 
-        // Get current user data
         const currentUser = sessionData.session.user;
 
         const { user: currUserData, error: userError } = await getUserProfile(
@@ -92,7 +91,16 @@ const HomeScreen = () => {
           setSelectedChallengeId(currUserData.selected_challenge_id);
         }
 
-        // See if a submission has already been made
+        const { data: roundData, error: roundError } = await getChallengeRound(
+          1
+        ); // round number hardcoded for no
+        if (roundError) {
+          console.error("Error fetching challenge round:", roundError);
+        } else if (roundData) {
+          setChallengeRound(roundData[0]);
+          console.log("Challenge round data:", roundData);
+        }
+
         const { data: submittedIds, error: submittedError } =
           await confirmSubmission(currentUser.id);
         if (submittedIds && submittedIds.length > 0) {
@@ -100,16 +108,14 @@ const HomeScreen = () => {
           setSubmitted(true);
         }
 
-        // Get matched player
-        const { match: matchData } = await getUserMatch(currentUser.id, 4);
+        const { match: matchData } = await getUserMatch(currentUser.id, 1);
         if (matchData) {
           setMatch(matchData);
           setMatchSelectedChallengeId(matchData.selected_challenge_id);
-          // Get the list of challenges
-          const { data: listData, error: listError } = await getChallengeList(
-            4
-          );
 
+          const { data: listData, error: listError } = await getChallengeList(
+            1
+          );
           if (listError) {
             console.error("Error fetching challenge list:", listError);
           } else {
@@ -119,7 +125,6 @@ const HomeScreen = () => {
               HARD: {},
             };
 
-            // Create dictionary of dictionaries with the challenge data per difficulty level
             listData.forEach((challenge) => {
               const diff = challenge.difficulty;
               if (grouped.hasOwnProperty(diff)) {
@@ -135,6 +140,7 @@ const HomeScreen = () => {
             setChallengesByDifficulty(grouped);
           }
         }
+
         setLoading(false);
       };
 
@@ -148,35 +154,36 @@ const HomeScreen = () => {
     }, [])
   );
 
+  // Helper function
+  const calculateTimeLeft = (endTime) => {
+    const now = new Date();
+    const difference = endTime - now;
+
+    if (difference <= 0) {
+      return { expired: true };
+    }
+
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / (1000 * 60)) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
+      expired: false,
+    };
+  };
+
   useEffect(() => {
-    if (!challengeRound) return;
+    if (!challengeRound?.end_time) return;
 
     const endTime = new Date(challengeRound.end_time);
-    const updateTimer = () => {
-      const now = new Date();
-      const distance = endTime - now;
-      if (distance <= 0) {
-        setTimeLeft({ expired: true });
-        return;
-      }
 
-      return {
-        hours: Math.floor(difference / (1000 * 60 * 60)),
-        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        expired: false,
-      };
-    };
+    // Initial set
+    setTimeLeft(calculateTimeLeft(endTime));
 
-    // Initial calculation
-    setTimeLeft(calculateTimeLeft());
-
-    // Update every second
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      setTimeLeft(calculateTimeLeft(endTime));
     }, 1000);
 
-    // Cleanup on unmount
     return () => clearInterval(timer);
   }, [challengeRound]);
 
@@ -197,17 +204,6 @@ const HomeScreen = () => {
         />
       ) : (
         <>
-          <Text style={styles.timer}>
-            ⏳
-            {timeLeft.expired
-              ? "Time's up!"
-              : `${timeLeft.days ? `${timeLeft.days}` : "0"}d ${
-                  timeLeft.hours ? `${timeLeft.hours}` : "0"
-                }h ${timeLeft.minutes ? `${timeLeft.minutes}` : "0"}m ${
-                  timeLeft.seconds ? `${timeLeft.seconds}` : "0"
-                }s`.trim()}
-          </Text>
-
           <View style={styles.body}>
             {loading ? (
               <ActivityIndicator
@@ -225,38 +221,14 @@ const HomeScreen = () => {
               />
             ) : (
               <>
-                <View style={styles.matchCard}>
-                  <Text style={styles.cardLabel}>YOUR TWIIN</Text>
-                  {matchInfo ? (
-                    <View style={styles.matchRow}>
-                      <Image
-                        source={
-                          matchInfo.avatar_url
-                            ? { uri: matchInfo.avatar_url }
-                            : defaultProfile
-                        }
-                        style={styles.avatar}
-                      />
-                      <Text style={styles.matchName}>{matchInfo.name}</Text>
-                      <TouchableOpacity onPress={copyEmailToClipboard}>
-                        <Icon
-                          name="mail-outline"
-                          size={24}
-                          style={styles.envelope}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <Text style={styles.noMatchText}>No match found</Text>
-                  )}
-                  <CustomButton
-                    backgroundColor={theme.colors.darkBlue}
-                    style={styles.rematchButton}
-                    disabled={true}
-                  >
-                    REMATCH
-                  </CustomButton>
-                </View>
+                <TimeHeader endTime={challengeRound.end_time} />
+                <MatchCard
+                  matchInfo={matchInfo}
+                  onCopyEmail={() => {
+                    setShowToast(true);
+                    setTimeout(() => setShowToast(false), 2000);
+                  }}
+                />
 
                 <Text style={styles.challengeTitle}>CHALLENGE DECK</Text>
                 {/*difficulty, challenge, voteButtonDisabled,*/}
@@ -449,7 +421,7 @@ const styles = StyleSheet.create({
   },
   challengeTitle: {
     fontFamily: theme.text.heading,
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",

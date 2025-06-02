@@ -150,7 +150,6 @@ export async function uploadVote(challengeId, userId) {
 /* Gets list of challenges for a given round
  */
 export const getChallengeList = async (roundNumber) => {
-  console.log("bruh");
   const { data, error } = await supabase
     .from("challenge_list")
     .select(
