@@ -204,6 +204,8 @@ const HomeScreen = () => {
         />
       ) : (
         <>
+                        <TimeHeader endTime={challengeRound.end_time} />
+
           <View style={styles.body}>
             {loading ? (
               <ActivityIndicator
