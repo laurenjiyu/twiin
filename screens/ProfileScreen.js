@@ -19,28 +19,6 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import TopBar from "../components/TopBar";
 import { useFocusEffect } from "@react-navigation/native";
 
-//Data of previous matches (sample data)
-const prevTwiins = [
-  {
-    challengeName: "Teacher Selfie",
-    difficulty: "Easy",
-    twiinName: "Daenerys T.",
-    date: "04/15/2025",
-  },
-  {
-    challengeName: "Campus Tour",
-    difficulty: "Medium",
-    twiinName: "Jon S.",
-    date: "04/20/2025",
-  },
-  {
-    challengeName: "SF Trip",
-    difficulty: "Hard",
-    twiinName: "Tyrion L.",
-    date: "04/22/2025",
-  },
-];
-
 const defaultUsername = "First Twiin";
 
 const ProfileScreen = ({ navigation }) => {
@@ -50,6 +28,8 @@ const ProfileScreen = ({ navigation }) => {
   const [avatarBase64, setAvatarBase64] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [submissions, setSubmissions] = useState([]);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(true);
 
   const fetchProfile = async () => {
     try {
@@ -107,20 +87,87 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const fetchSubmissions = async () => {
+    try {
+      setIsLoadingSubmissions(true);
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        console.error("User not authenticated");
+        return;
+      }
+
+      const userId = session.user.id;
+
+      // Fetch submissions where user is either user_id or partner_id
+      const { data: submissionsData, error: submissionsError } = await supabase
+        .from("submissions")
+        .select(
+          `
+          id,
+          submitted_at,
+          user_id,
+          partner_id,
+          challenge_id,
+          users!submissions_user_id_fkey (
+            name
+          ),
+          partners:users!submissions_partner_id_fkey (
+            name
+          ),
+          challenge_list (
+            short_desc,
+            difficulty
+          )
+        `
+        )
+        .or(`user_id.eq.${userId},partner_id.eq.${userId}`)
+        .order("submitted_at", { ascending: false });
+
+      if (submissionsError) {
+        console.error("Error fetching submissions:", submissionsError);
+        return;
+      }
+
+      setSubmissions(submissionsData);
+    } catch (error) {
+      console.error("Error in fetchSubmissions:", error);
+    } finally {
+      setIsLoadingSubmissions(false);
+    }
+  };
+
   // Use useFocusEffect with cleanup
   useFocusEffect(
     React.useCallback(() => {
       console.log("ProfileScreen focused - fetching profile data");
       fetchProfile();
+      fetchSubmissions();
 
       // Cleanup function
       return () => {
         console.log("ProfileScreen unfocused - cleaning up");
         setAvatarBase64(null);
         setIsLoading(true);
+        setSubmissions([]);
       };
     }, [])
   );
+
+  // Helper function to get the other user's name
+  const getOtherUserName = async (submission) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const userId = session.user.id;
+
+    return submission.user_id === userId
+      ? submission.partners.name
+      : submission.users.name;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -163,25 +210,34 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {prevTwiins.map((twiin, index) => (
-            <View key={index} style={styles.twiinCard}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <View>
-                  <Text style={styles.twiinName}>{twiin.twiinName}</Text>
-                  <Text style={styles.twiinDetails}>
-                    {twiin.challengeName} | {twiin.difficulty}
+          {isLoadingSubmissions ? (
+            <ActivityIndicator size="large" color={theme.colors.darkBlue} />
+          ) : (
+            submissions.map((submission) => (
+              <View key={submission.id} style={styles.twiinCard}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}
+                >
+                  <View>
+                    <Text style={styles.twiinName}>
+                      {getOtherUserName(submission)}
+                    </Text>
+                    <Text style={styles.twiinDetails}>
+                      {submission.challenge_list.short_desc} |{" "}
+                      {submission.challenge_list.difficulty}
+                    </Text>
+                  </View>
+                  <Text style={styles.twiinDate}>
+                    {new Date(submission.submitted_at).toLocaleDateString()}
                   </Text>
                 </View>
-                <Text style={styles.twiinDate}>{twiin.date}</Text>
               </View>
-            </View>
-          ))}
+            ))
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>

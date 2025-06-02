@@ -13,11 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import CustomButton from "./CustomButton";
 import { supabase } from "../db";
 
-const ChallengeCompleteView = ({
-  userInfo,
-  pointsEarned = 25,
-  setSubmitted,
-}) => {
+const ChallengeCompleteView = ({ userInfo, pointsEarned, setSubmitted }) => {
   const navigation = useNavigation();
   const [avatarBase64, setAvatarBase64] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

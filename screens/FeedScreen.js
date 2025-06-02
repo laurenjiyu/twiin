@@ -26,7 +26,6 @@ const FeedScreen = () => {
   const [selectedCardPosition, setSelectedCardPosition] = useState(null);
   const cardRefs = useRef({});
   const [selectedReactionsId, setSelectedReactionsId] = useState(null);
-  const [reactionsButtonPosition, setReactionsButtonPosition] = useState(null);
   const [submissionImages, setSubmissionImages] = useState({});
 
   // Fetch user info
@@ -303,17 +302,7 @@ const FeedScreen = () => {
             style={styles.reactionsButton}
             onPress={() => {
               // Measure the button position
-              buttonRef.current?.measure(
-                (x, y, width, height, pageX, pageY) => {
-                  setReactionsButtonPosition({
-                    x: pageX,
-                    y: pageY,
-                    width,
-                    height,
-                  });
-                  setSelectedReactionsId(submissionId);
-                }
-              );
+              setSelectedReactionsId(submissionId);
             }}
             ref={buttonRef}
           >
@@ -325,7 +314,7 @@ const FeedScreen = () => {
                   </Text>
                 ))}
               </View>
-              <View style={styles.reactionsTextContainer}>
+              <View>
                 <Text style={styles.reactionsText}>
                   by {firstUserName}
                   {otherUsersCount > 0 ? ` and ${otherUsersCount} others` : ""}
@@ -411,22 +400,6 @@ const FeedScreen = () => {
           </View>
         ))}
       </ScrollView>
-
-      {selectedReactionsId && reactionsButtonPosition && (
-        <View
-          style={[
-            styles.allReactionsBox,
-            {
-              position: "absolute",
-              top:
-                reactionsButtonPosition.y + reactionsButtonPosition.height + 8,
-              right: 20,
-            },
-          ]}
-        >
-          {/* This will be implemented later */}
-        </View>
-      )}
 
       <EmojiPicker
         visible={showEmojiPicker}
@@ -564,12 +537,12 @@ const styles = StyleSheet.create({
   otherReactionsContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginLeft: 1,
+    marginHorizontal: 2,
   },
   reactionsButton: {
     backgroundColor: "#f0f0f0",
     borderRadius: 12,
-    padding: 8,
+    padding: 4,
     borderWidth: 0.5,
     borderColor: theme.colors.darkestBlue,
   },
@@ -581,13 +554,11 @@ const styles = StyleSheet.create({
   emojisContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-  },
-  reactionsTextContainer: {
-    marginLeft: 2,
+    //gap: 4,
   },
   reactionsText: {
     fontSize: 14,
+    marginRight: 4,
     fontFamily: "SpaceGrotesk_400Regular",
     color: "#666",
   },
@@ -669,7 +640,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 12,
+    marginRight: 4,
   },
   reactionEmojiCol: {
     fontSize: 16,

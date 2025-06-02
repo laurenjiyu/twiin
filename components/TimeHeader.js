@@ -39,7 +39,7 @@ const getFormattedDateTime = (isoString) => {
   return `Round ends on ${weekday}, ${month} ${day}${suffix} at ${time}`;
 };
 
-const TimeHeader = ({ endTime, roundNumber=1 }) => {
+const TimeHeader = ({ endTime, roundNumber = 1 }) => {
   if (!endTime) return null;
 
   return (
@@ -52,7 +52,8 @@ const TimeHeader = ({ endTime, roundNumber=1 }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginTop: 12,
+    marginBottom: 30,
     alignItems: "center",
   },
   text: {

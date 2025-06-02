@@ -156,7 +156,6 @@ export const getChallengeList = async (roundNumber) => {
       "id, short_desc, full_desc, difficulty, point_value, challenge_round"
     )
     .eq("challenge_round", roundNumber);
-  console.log("Challenge List:", data);
   return { data, error };
 };
 
@@ -164,7 +163,6 @@ export const getChallengeList = async (roundNumber) => {
  */
 export const getChallengeRound = async () => {
   const now = new Date().toISOString();
-  console.log("Current time:", now);
 
   const { data, error } = await supabase
     .from("challenge_rounds")

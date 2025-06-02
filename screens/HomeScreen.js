@@ -92,11 +92,12 @@ const HomeScreen = () => {
         }
 
         const { data: roundData, error: roundError } = await getChallengeRound(
-          1
+          5
         ); // round number hardcoded for no
         if (roundError) {
           console.error("Error fetching challenge round:", roundError);
         } else if (roundData) {
+          console.log("roundData", roundData);
           setChallengeRound(roundData[0]);
           console.log("Challenge round data:", roundData);
         }
@@ -199,12 +200,12 @@ const HomeScreen = () => {
       {submitted ? (
         <ChallengeCompleteView
           userInfo={userInfo}
-          pointsEarned={300}
+          pointsEarned={currentChallenge?.point_value || 0}
           setSubmitted={setSubmitted}
         />
       ) : (
         <>
-          <TimeHeader endTime={challengeRound.end_time} />
+          {/* <TimeHeader endTime={challengeRound?.end_time} /> */}
 
           <View style={styles.body}>
             {loading ? (
