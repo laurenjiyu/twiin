@@ -148,6 +148,25 @@ const ChallengeSubmissionView = ({
 
       if (error) throw error;
 
+      // --- Update user points after successful submission ---
+      const pointsToAdd = chosenChallenge.point_value || 0;
+      const userId = user.id;
+      // Fetch current points
+      const { data: userData, error: fetchError } = await supabase
+        .from("users")
+        .select("total_points")
+        .eq("id", userId)
+        .single();
+      if (fetchError) throw fetchError;
+
+      const newPoints = (userData?.total_points || 0) + pointsToAdd;
+      const { error: updatePointsError } = await supabase
+        .from("users")
+        .update({ total_points: newPoints })
+        .eq("id", userId);
+      if (updatePointsError) throw updatePointsError;
+      // --- End points update ---
+
       Alert.alert("Success", "Your submission has been saved!");
       setSubmissionPage(false); // go back to previous screen
     } catch (err) {

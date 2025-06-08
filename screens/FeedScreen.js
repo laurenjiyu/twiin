@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   SafeAreaView,
@@ -14,6 +14,7 @@ import { supabase } from "../db";
 import TopBar from "../components/TopBar";
 import EmojiPicker from "../components/EmojiPicker";
 import ReactionModal from "../components/ReactionModal";
+import { useFocusEffect } from "@react-navigation/native";
 
 const FeedScreen = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -28,8 +29,8 @@ const FeedScreen = () => {
   const [selectedReactionsId, setSelectedReactionsId] = useState(null);
   const [submissionImages, setSubmissionImages] = useState({});
 
-  // Fetch user info
-  useEffect(() => {
+  // Fetch user info (run once)
+  React.useEffect(() => {
     const fetchUser = async () => {
       const { data: sessionData, error: sessionError } =
         await supabase.auth.getSession();
@@ -42,87 +43,89 @@ const FeedScreen = () => {
     fetchUser();
   }, []);
 
-  // Fetch submissions with related data
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!currentUserId) return;
+  // Fetch submissions and reactions every time the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        if (!currentUserId) return;
 
-      const { data: submissionsData, error: submissionsError } = await supabase
-        .from("submissions")
-        .select(
+        const { data: submissionsData, error: submissionsError } = await supabase
+          .from("submissions")
+          .select(
+            `
+            id,
+            submitted_at,
+            challenge_id,
+            user_id,
+            partner_id,
+            post_bool,
+            payload,
+            users!submissions_user_id_fkey (
+              name
+            ),
+            partners:users!submissions_partner_id_fkey (
+              name
+            ),
+            challenge_list (
+              difficulty,
+              short_desc
+            )
           `
-          id,
-          submitted_at,
-          challenge_id,
-          user_id,
-          partner_id,
-          post_bool,
-          payload,
-          users!submissions_user_id_fkey (
-            name
-          ),
-          partners:users!submissions_partner_id_fkey (
-            name
-          ),
-          challenge_list (
-            difficulty,
-            short_desc
           )
-        `
-        )
-        .order("submitted_at", { ascending: false });
+          .order("submitted_at", { ascending: false });
 
-      if (submissionsError) {
-        console.error("Error fetching submissions:", submissionsError);
-        return;
-      }
+        if (submissionsError) {
+          console.error("Error fetching submissions:", submissionsError);
+          return;
+        }
 
-      setSubmissions(submissionsData);
+        setSubmissions(submissionsData);
 
-      // Fetch images for submissions with post_bool = true
-      for (const submission of submissionsData) {
-        if (submission.post_bool) {
-          try {
-            const { data, error: downloadError } = await supabase.storage
-              .from("submissions")
-              .download(submission.payload);
+        // Fetch images for submissions with post_bool = true
+        for (const submission of submissionsData) {
+          if (submission.post_bool) {
+            try {
+              const { data, error: downloadError } = await supabase.storage
+                .from("submissions")
+                .download(submission.payload);
 
-            if (downloadError) {
-              console.log("Error downloading submission image:", downloadError);
+              if (downloadError) {
+                console.log("Error downloading submission image:", downloadError);
+                setSubmissionImages((prev) => ({
+                  ...prev,
+                  [submission.id]: null,
+                }));
+                continue;
+              }
+
+              // Convert the file to base64
+              const reader = new FileReader();
+              reader.readAsDataURL(data);
+              reader.onloadend = () => {
+                setSubmissionImages((prev) => ({
+                  ...prev,
+                  [submission.id]: reader.result,
+                }));
+              };
+            } catch (error) {
+              console.error("Error processing image:", error);
               setSubmissionImages((prev) => ({
                 ...prev,
                 [submission.id]: null,
               }));
-              continue;
             }
-
-            // Convert the file to base64
-            const reader = new FileReader();
-            reader.readAsDataURL(data);
-            reader.onloadend = () => {
-              setSubmissionImages((prev) => ({
-                ...prev,
-                [submission.id]: reader.result,
-              }));
-            };
-          } catch (error) {
-            console.error("Error processing image:", error);
-            setSubmissionImages((prev) => ({
-              ...prev,
-              [submission.id]: null,
-            }));
           }
         }
-      }
 
-      // After fetching submissions, fetch reactions for each
-      for (const submission of submissionsData) {
-        await fetchReactions(submission.id);
-      }
-    };
+        // After fetching submissions, fetch reactions for each
+        for (const submission of submissionsData) {
+          await fetchReactions(submission.id);
+        }
+      };
 
-    fetchData();
-  }, [currentUserId]);
+      fetchData();
+    }, [currentUserId])
+  );
 
   const fetchReactions = async (submissionId) => {
     try {
@@ -349,7 +352,14 @@ const FeedScreen = () => {
                     {submission.users.name} & {submission.partners.name}
                   </Text>
                   <Text style={styles.date}>
-                    {new Date(submission.submitted_at).toLocaleDateString()}
+                    {
+                      (() => {
+                        const submitted = new Date(submission.submitted_at);
+                        const maxDate = new Date("2025-06-05T23:59:59");
+                        const displayDate = submitted > maxDate ? maxDate : submitted;
+                        return displayDate.toLocaleDateString();
+                      })()
+                    }
                   </Text>
                 </View>
                 <View style={styles.descriptionRow}>
@@ -392,7 +402,7 @@ const FeedScreen = () => {
                 }}
               >
                 <Text style={styles.currentUserReactionEmoji}>
-                  {reactions[submission.id] || "😊"}
+                  {reactions[submission.id] || "+"}
                 </Text>
               </TouchableOpacity>
               <OtherReactions submissionId={submission.id} />

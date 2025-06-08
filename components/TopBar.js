@@ -1,44 +1,45 @@
-import React, { useEffect } from "react";
+import React, { useCallback } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import TrophyIcon from "../assets/icons/DefaultTrophy.png";
-import { supabase, getUserProfile } from "../db.js"
-import theme from "../theme"; // Assuming your theme file includes color definitions
+import { supabase, getUserProfile } from "../db.js";
+import theme from "../theme";
+import { useFocusEffect } from "@react-navigation/native"; // <-- Add this
 
-const TopBar = ({ groupName = "CS278"}) => {
+const TopBar = ({ groupName = "CS278" }) => {
   const [points, setPoints] = React.useState(null);
-  useEffect(() => {
-  const loadData = async () => {
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadData = async () => {
         const { data: sessionData, error: sessionError } =
           await supabase.auth.getSession();
-  
+
         if (sessionError || !sessionData.session) {
           console.error("Error fetching session:", sessionError);
-          return; //if user not logged in
+          return;
         }
-        
+
         const currentUser = sessionData.session.user;
-        console.log("User:", currentUser);
         const { user, error } = await getUserProfile(currentUser.id);
         if (error) {
           console.error("Error fetching user data:", error);
           return;
         }
-        console.log("User data:", user);
         setPoints(user.total_points);
-  };
-  loadData();
-  }, []); // Empty dependency array to run only once on mount
+      };
+      loadData();
+    }, [])
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.leftContainer}>
         <Text style={styles.left}>Twiin</Text>
       </View>
-
       <View style={styles.center}>
         <Image source={TrophyIcon} style={styles.icon} />
         <Text style={styles.points}>{points ?? "--"}</Text>
       </View>
-
       <View style={styles.rightContainer}>
         <Text style={styles.right}>{groupName}</Text>
       </View>

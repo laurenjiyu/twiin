@@ -232,7 +232,13 @@ const ProfileScreen = ({ navigation }) => {
                     </Text>
                   </View>
                   <Text style={styles.twiinDate}>
-                    {new Date(submission.submitted_at).toLocaleDateString()}
+                    {(() => {
+                      const submitted = new Date(submission.submitted_at);
+                      const maxDate = new Date("2025-06-05T23:59:59");
+                      const displayDate =
+                        submitted > maxDate ? maxDate : submitted;
+                      return displayDate.toLocaleDateString();
+                    })()}{" "}
                   </Text>
                 </View>
               </View>

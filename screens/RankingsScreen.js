@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   SafeAreaView,
@@ -14,6 +14,7 @@ import BronzeTrophy from "../assets/icons/BronzeTrophy.png";
 import DefaultTrophy from "../assets/icons/DefaultTrophy.png";
 import { supabase } from "../db";
 import TopBar from "../components/TopBar";
+import { useFocusEffect } from "@react-navigation/native";
 
 const generateLeaderboard = async () => {
   const { data, error } = await supabase
@@ -86,7 +87,9 @@ const TrophyIcon = ({ rank }) => {
 
 const RankingsScreen = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
-  //fetch user info
+  const [leaderboardData, setLeaderboardData] = useState([]);
+
+  // Fetch user info (can stay as useEffect)
   useEffect(() => {
     const fetchUser = async () => {
       const { data: sessionData, error: sessionError } =
@@ -94,34 +97,32 @@ const RankingsScreen = () => {
 
       if (sessionError || !sessionData.session) {
         console.error("Error fetching session:", sessionError);
-        return; //if user not logged in
+        return;
       }
 
       const currentUser = sessionData.session.user;
-      console.log("User:", currentUser);
       setCurrentUserId(currentUser.id);
     };
 
     fetchUser();
   }, []);
 
-  //create leaderboard
-  const [leaderboardData, setLeaderboardData] = useState([]);
+  // Fetch leaderboard every time the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const fetchLeaderboard = async () => {
+        const data = await generateLeaderboard();
+        setLeaderboardData(data.length ? data : sampleData);
+      };
+      fetchLeaderboard();
+    }, [])
+  );
 
   //find current user points for topbar
   const currentUser = leaderboardData.find(
     (user) => user.userId === currentUserId
   );
   const currentPoints = currentUser?.points ?? 0;
-
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      const data = await generateLeaderboard();
-      setLeaderboardData(data.length ? data : sampleData);
-    };
-
-    fetchLeaderboard();
-  }, []);
 
   return (
     <SafeAreaView style={[styles.container]}>
